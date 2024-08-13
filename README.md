@@ -5,11 +5,11 @@
 
 ...
 
-##About the Game
+## About the Game
 
 ...
 
-##Getting Started
+## Getting Started
 
 This project uses Visual Studio 20** (Visual Studio 2022 is free) to setup and runs the OpenGL, GLFW and GLEW all in c++.
 
