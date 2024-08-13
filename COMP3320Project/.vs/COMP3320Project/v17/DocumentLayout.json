@@ -3,8 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\Alex\\dev\\2024\\project\\COMP3320Project\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{5C57950C-2C3A-40F0-AA7D-84188375EC4A}|COMP3320Project\\COMP3320Project.vcxproj|C:\\Users\\Alex\\dev\\2024\\project\\COMP3320Project\\COMP3320Project\\scr\\Application.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{5C57950C-2C3A-40F0-AA7D-84188375EC4A}|COMP3320Project\\COMP3320Project.vcxproj|solutionrelative:COMP3320Project\\scr\\Application.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{5C57950C-2C3A-40F0-AA7D-84188375EC4A}|COMP3320Project\\COMP3320Project.vcxproj|C:\\Users\\Alex\\dev\\2024\\project\\COMP3320Project\\COMP3320Project\\scr\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{5C57950C-2C3A-40F0-AA7D-84188375EC4A}|COMP3320Project\\COMP3320Project.vcxproj|solutionrelative:COMP3320Project\\scr\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -19,12 +19,12 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Application.cpp",
-              "DocumentMoniker": "C:\\Users\\Alex\\dev\\2024\\project\\COMP3320Project\\COMP3320Project\\scr\\Application.cpp",
-              "RelativeDocumentMoniker": "COMP3320Project\\scr\\Application.cpp",
-              "ToolTip": "C:\\Users\\Alex\\dev\\2024\\project\\COMP3320Project\\COMP3320Project\\scr\\Application.cpp",
-              "RelativeToolTip": "COMP3320Project\\scr\\Application.cpp",
-              "ViewState": "AQIAAAkAAAAAAAAAAAAAABYAAAAAAAAA",
+              "Title": "main.cpp",
+              "DocumentMoniker": "C:\\Users\\Alex\\dev\\2024\\project\\COMP3320Project\\COMP3320Project\\scr\\main.cpp",
+              "RelativeDocumentMoniker": "COMP3320Project\\scr\\main.cpp",
+              "ToolTip": "C:\\Users\\Alex\\dev\\2024\\project\\COMP3320Project\\COMP3320Project\\scr\\main.cpp",
+              "RelativeToolTip": "COMP3320Project\\scr\\main.cpp",
+              "ViewState": "AQIAAAkAAAAAAAAAAAAAABIAAAAFAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-08-13T11:53:14.284Z",
               "EditorCaption": ""
