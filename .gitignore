@@ -13,7 +13,7 @@
 *.slo
 *.lo
 *.o
-*.obj
+#*.obj as we want to check in the obj files
 
 # Precompiled Headers
 *.gch
