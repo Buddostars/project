@@ -134,6 +134,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="scr\main.cpp" />
+    <ClCompile Include="scr\texture_loader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="scr\texture_loader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
