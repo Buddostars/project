@@ -10,8 +10,7 @@
                 "-fdiagnostics-color=always",
                 "-Wall",
                 "-g",
-                "-I${workspaceFolder}/dependencies/osx/include",
-                "-I/opt/homebrew/Cellar/glm/1.0.1/include", // Homebrew installed include directory
+                "-I${workspaceFolder}/dependencies/include",
                 "-L${workspaceFolder}/dependencies/osx/library",
                 "${workspaceFolder}/dependencies/osx/library/libglfw.3.dylib",
                 "${workspaceFolder}/dependencies/osx/library/libassimp.5.4.3.dylib",
@@ -54,8 +53,7 @@
                 "-fdiagnostics-color=always",
                 "-Wall",
                 "-g",
-                "-I${workspaceFolder}/dependencies/windows/include",
-                "-I/opt/homebrew/Cellar/glm/1.0.1/include", // Homebrew installed include directory
+                "-I${workspaceFolder}/dependencies/include",
                 "-L${workspaceFolder}/dependencies/windows/library",
                 "${workspaceFolder}/dependencies/windows/library/libglfw.3.dylib",
                 "${workspaceFolder}/dependencies/windows/library/libassimp.5.4.3.dylib",
