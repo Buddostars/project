@@ -157,8 +157,16 @@ int main(){
 
     processNode(scene->mRootNode, scene);
 
+	// Set light properties
+    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    glm::vec3 lightColor(1.0f, 1.0f, 1.0f);  // White light
+    
+    // Set camera position (viewer's position)
+    glm::vec3 viewPos(0.0f, 0.0f, 3.0f);
+
     // run if window is not closed and escape key is not pressed
     while(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0){
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the screen
 
         // Activate the shader program
@@ -166,6 +174,11 @@ int main(){
 
         // compute controlls
         computeMatricesFromInputs(window);
+
+        // Set lighting uniforms
+        shaderProgram.setVec3("lightPos", lightPos);
+        shaderProgram.setVec3("lightColor", lightColor);
+        shaderProgram.setVec3("viewPos", viewPos);
 
         // Set any uniform variables (like model, view, projection matrices)
         glm::mat4 model = glm::mat4(1.0f);
