@@ -11,6 +11,7 @@
                 "-Wall",
                 "-g",
                 "-I${workspaceFolder}/dependencies/include",
+                "-I/opt/homebrew/Cellar/glm/1.0.1/include", // Homebrew installed include directory
                 "-L${workspaceFolder}/dependencies/library",
                 "${workspaceFolder}/dependencies/library/libglfw.3.dylib",
                 "${workspaceFolder}/dependencies/library/libassimp.5.4.3.dylib",
