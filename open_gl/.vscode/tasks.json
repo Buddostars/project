@@ -3,18 +3,18 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: clang++ build active file",
+            "label": "C/C++: clang++ macos ARM",
             "command": "/usr/bin/clang++",
             "args": [
                 "-std=c++17",
                 "-fdiagnostics-color=always",
                 "-Wall",
                 "-g",
-                "-I${workspaceFolder}/dependencies/include",
+                "-I${workspaceFolder}/dependencies/osx/include",
                 "-I/opt/homebrew/Cellar/glm/1.0.1/include", // Homebrew installed include directory
-                "-L${workspaceFolder}/dependencies/library",
-                "${workspaceFolder}/dependencies/library/libglfw.3.dylib",
-                "${workspaceFolder}/dependencies/library/libassimp.5.4.3.dylib",
+                "-L${workspaceFolder}/dependencies/osx/library",
+                "${workspaceFolder}/dependencies/osx/library/libglfw.3.dylib",
+                "${workspaceFolder}/dependencies/osx/library/libassimp.5.4.3.dylib",
                 "${workspaceFolder}/main.cpp",
                 "${workspaceFolder}/controls.cpp",
                 "${workspaceFolder}/glad.c", // This is fine; clang++ can compile C files
@@ -31,7 +31,51 @@
                 "-framework",
                 "CoreFoundation",
                 "-Wno-deprecated",
-                "-Wl,-rpath,${workspaceFolder}/dependencies/library"
+                "-Wl,-rpath,${workspaceFolder}/dependencies/osx/library"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "compiler: /usr/bin/clang++"
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: clang++ windows x86",
+            "command": "/usr/bin/clang++",
+            "args": [
+                "-std=c++17",
+                "-fdiagnostics-color=always",
+                "-Wall",
+                "-g",
+                "-I${workspaceFolder}/dependencies/windows/include",
+                "-I/opt/homebrew/Cellar/glm/1.0.1/include", // Homebrew installed include directory
+                "-L${workspaceFolder}/dependencies/windows/library",
+                "${workspaceFolder}/dependencies/windows/library/libglfw.3.dylib",
+                "${workspaceFolder}/dependencies/windows/library/libassimp.5.4.3.dylib",
+                "${workspaceFolder}/main.cpp",
+                "${workspaceFolder}/controls.cpp",
+                "${workspaceFolder}/glad.c", // This is fine; clang++ can compile C files
+                "-o",
+                "${workspaceFolder}/app",
+                "-framework",
+                "OpenGL",
+                "-framework",
+                "Cocoa",
+                "-framework",
+                "IOKit",
+                "-framework",
+                "CoreVideo",
+                "-framework",
+                "CoreFoundation",
+                "-Wno-deprecated",
+                "-Wl,-rpath,${workspaceFolder}/windows/dependencies/library"
             ],
             "options": {
                 "cwd": "${fileDirname}"
