@@ -13,6 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>         // For converting matrices to OpenGL-compatible pointers
 
 #include "shader.h"
+#include "controls.hpp"
 
 struct Vertex {
     glm::vec3 Position;
@@ -132,7 +133,7 @@ int main(){
 
     // add background color
     gladLoadGL();
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, 1500, 1100);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);  // Dark grey background
     glEnable(GL_DEPTH_TEST); // Enable depth testing
 
@@ -141,7 +142,7 @@ int main(){
 
     // Load object with assimp
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile("test.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
+    const aiScene* scene = importer.ReadFile("cow.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
         std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
         return -1;
@@ -149,18 +150,21 @@ int main(){
 
     processNode(scene->mRootNode, scene);
 
-    // run if window is not closed
-    while(!glfwWindowShouldClose(window)){
+    // run if window is not closed and escape key is not pressed
+    while(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the screen
 
         // Activate the shader program
         shaderProgram.use();
 
+        // compute controlls
+        computeMatricesFromInputs(window);
+
         // Set any uniform variables (like model, view, projection matrices)
         glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-        
+        glm::mat4 view = getViewMatrix();
+        glm::mat4 projection = getProjectionMatrix();
+
         shaderProgram.setMat4("model", model);
         shaderProgram.setMat4("view", view);
         shaderProgram.setMat4("projection", projection);

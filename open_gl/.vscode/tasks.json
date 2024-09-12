@@ -16,6 +16,7 @@
                 "${workspaceFolder}/dependencies/library/libglfw.3.dylib",
                 "${workspaceFolder}/dependencies/library/libassimp.5.4.3.dylib",
                 "${workspaceFolder}/main.cpp",
+                "${workspaceFolder}/controls.cpp",
                 "${workspaceFolder}/glad.c", // This is fine; clang++ can compile C files
                 "-o",
                 "${workspaceFolder}/app",
