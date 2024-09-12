@@ -43,3 +43,11 @@ app
 # Debug files
 
 *.dSYM/
+".vs/" 
+".vs/" 
+"build/" 
+"Debug/" 
+"*.log" 
+"*.obj" 
+"*.exe" 
+".vs/" 
