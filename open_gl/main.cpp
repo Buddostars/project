@@ -185,10 +185,18 @@ int main(){
         glm::mat4 view = getViewMatrix();
         glm::mat4 projection = getProjectionMatrix();
 
+        // Rotate the model
+        float timeValue = glfwGetTime();    // Get the current time (in seconds)
+        float angle = timeValue * glm::radians(50.0f);  // Rotate 50 degrees per second
+
+        model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate around the Y-axis
+        
+        // Set the model, view, and projection matrices
         shaderProgram.setMat4("model", model);
         shaderProgram.setMat4("view", view);
         shaderProgram.setMat4("projection", projection);
 
+        // Draw the mesh
         drawMesh();
         glfwSwapBuffers(window);
         glfwPollEvents();
