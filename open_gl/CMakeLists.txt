@@ -54,8 +54,8 @@ elseif(WIN32)
 
     # Link Windows libraries
     target_link_libraries(${PROJECT_NAME}
-        ${LIBRARY_PATH}/libglfw.3.dylib
-        ${LIBRARY_PATH}/libassimp.5.4.3.dylib
+        ${LIBRARY_PATH}/glfw3.dll
+        ${LIBRARY_PATH}/libassimp-5.dll
     )
 
     # Set runtime path for Windows
