@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <vector>
 
 #include <assimp/Importer.hpp>    // C++ importer interface 
 #include <assimp/scene.h>           // Output data structure
