@@ -1,3 +1,0 @@
-/Users/michaelalbrecht/Studium_Dateien/wise2425/Computer Graphics/project/open_gl/build/CMakeFiles/OpenGLProject.dir
-/Users/michaelalbrecht/Studium_Dateien/wise2425/Computer Graphics/project/open_gl/build/CMakeFiles/edit_cache.dir
-/Users/michaelalbrecht/Studium_Dateien/wise2425/Computer Graphics/project/open_gl/build/CMakeFiles/rebuild_cache.dir
