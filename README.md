@@ -11,12 +11,12 @@
 
 ## Getting Started
 
-This project uses Visual Studio 20** (Visual Studio 2022 is free) to setup and runs the OpenGL, GLFW and GLEW all in c++.
+This project uses VS Code to setup and runs the OpenGL, GLFW and GLAD all in c++.
 
 ### Prerequisites
-To run the game, you will need to have Visual studio 2022 installed onto you machine.
+To run the game, you will need to have VS Code installed onto you machine.
 
--[Visual Studio](https://visualstudio.microsoft.com/)
+-[VS Code](https://code.visualstudio.com)
 
 ### Running the Application
 
@@ -28,10 +28,4 @@ git clone https://github.com/Buddostars/project
 
 ```
 
-2. Open File explorer to where your clone repository is located.
-
-3. Open the project folder and then the COMP3320Project folder.
-
-4. Open COMP3320Project.sln in Visual Studio 2022
-
-5. Once in Visual Studio 2022 build the project and a window will appear with triangle *ATM*
+Refer to the vs_code_setup.md to setup your enviroment.
