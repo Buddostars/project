@@ -118,7 +118,10 @@ void processNode(aiNode* node, const aiScene* scene) {
 
 int main(){
     // Initialize GLFW
-    glfwInit();
+    if (!glfwInit()) {
+    std::cout << "Failed to initialize GLFW" << std::endl;
+    return -1;
+    }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
