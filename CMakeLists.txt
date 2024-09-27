@@ -14,9 +14,9 @@ include_directories(${CMAKE_SOURCE_DIR}/dependencies/include)
 
 # Source files
 set(SOURCES
-    ${CMAKE_SOURCE_DIR}/main.cpp
-    ${CMAKE_SOURCE_DIR}/controls.cpp
-    ${CMAKE_SOURCE_DIR}/glad.c
+    ${CMAKE_SOURCE_DIR}/src/main.cpp
+    ${CMAKE_SOURCE_DIR}/src/controls.cpp
+    ${CMAKE_SOURCE_DIR}/src/glad.c
 )
 
 # Add executable target
@@ -54,8 +54,8 @@ elseif(WIN32)
 
     # Link Windows libraries
     target_link_libraries(${PROJECT_NAME}
-        ${LIBRARY_PATH}/glfw3.dll
-        ${LIBRARY_PATH}/libassimp-5.dll
+        ${LIBRARY_PATH}/libglfw3dll.a
+        ${LIBRARY_PATH}/libassimp.dll.a
     )
 
     # Set runtime path for Windows
