@@ -151,7 +151,7 @@ int main(){
     glEnable(GL_DEPTH_TEST); // Enable depth testing
 
     // Create the shader program
-    Shader shaderProgram("shaders/vertex_shader.vert", "shaders/fragment_shader.frag");
+    Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     
 
     std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
@@ -164,6 +164,8 @@ int main(){
     }
 
     processNode(scene->mRootNode, scene);
+    std::cout << "Loaded " << vertices.size() << " vertices and " << indices.size() << " indices." << std::endl;
+
 
 	// Set light properties
     glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
