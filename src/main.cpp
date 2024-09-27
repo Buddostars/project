@@ -16,6 +16,8 @@
 #include "shader.h"
 #include "controls.hpp"
 
+#include <filesystem>
+
 struct Vertex {
     glm::vec3 Position;
     glm::vec3 Normal;
@@ -150,10 +152,12 @@ int main(){
 
     // Create the shader program
     Shader shaderProgram("shaders/vertex_shader.vert", "shaders/fragment_shader.frag");
+    
 
+    std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
     // Load object with assimp
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile("cow.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
+    const aiScene* scene = importer.ReadFile("src/models/cow.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
         std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
         return -1;
@@ -207,9 +211,9 @@ int main(){
         model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate around the Y-axis
         
         // Set the model, view, and projection matrices
-        shaderProgram.setMat4("model", model);
-        shaderProgram.setMat4("view", view);
-        shaderProgram.setMat4("projection", projection);
+         shaderProgram.setMat4("model", model);
+         shaderProgram.setMat4("view", view);
+         shaderProgram.setMat4("projection", projection);
 
         // Draw the mesh
         drawMesh();
