@@ -15,108 +15,11 @@
 
 #include "shader.h"
 #include "controls.hpp"
+#include "cow.hpp"
 
 #include <filesystem>
 
-struct Vertex {
-    glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 TexCoords;
-};
 
-std::vector<Vertex> vertices;
-std::vector<unsigned int> indices;
-unsigned int VAO, VBO, EBO;
-
-void setupMesh() {
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-
-    // Vertex positions
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // Vertex normals
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
-    glEnableVertexAttribArray(1);
-
-    // Vertex texture coords
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-    glEnableVertexAttribArray(2);
-
-    glBindVertexArray(0);
-}
-
-void drawMesh() {
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-}
-
-void processMesh(aiMesh* mesh, const aiScene* scene) {
-    // Process vertices
-    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        Vertex vertex;
-        glm::vec3 vector;
-
-        // Position
-        vector.x = mesh->mVertices[i].x;
-        vector.y = mesh->mVertices[i].y;
-        vector.z = mesh->mVertices[i].z;
-        vertex.Position = vector;
-
-        // Normal
-        vector.x = mesh->mNormals[i].x;
-        vector.y = mesh->mNormals[i].y;
-        vector.z = mesh->mNormals[i].z;
-        vertex.Normal = vector;
-
-        // Texture coordinates
-        if (mesh->mTextureCoords[0]) {
-            glm::vec2 vec;
-            vec.x = mesh->mTextureCoords[0][i].x;
-            vec.y = mesh->mTextureCoords[0][i].y;
-            vertex.TexCoords = vec;
-        } else {
-            vertex.TexCoords = glm::vec2(0.0f, 0.0f);
-        }
-
-        vertices.push_back(vertex);
-    }
-
-    // Process indices
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-        aiFace face = mesh->mFaces[i];
-        for (unsigned int j = 0; j < face.mNumIndices; j++) {
-            indices.push_back(face.mIndices[j]);
-        }
-    }
-
-    // Now create buffers
-    setupMesh();
-}
-
-void processNode(aiNode* node, const aiScene* scene) {
-    // Process each mesh at this node
-    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        processMesh(mesh, scene);
-    }
-
-    // After processing all the meshes, recursively process children
-    for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        processNode(node->mChildren[i], scene);
-    }
-}
 
 int main(){
     // Initialize GLFW
@@ -156,15 +59,8 @@ int main(){
 
     std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
     // Load object with assimp
-    Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile("src/models/cow.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
-        std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
-        return -1;
-    }
+    loadCowModel("src/models/cow.obj");
 
-    processNode(scene->mRootNode, scene);
-    std::cout << "Loaded " << vertices.size() << " vertices and " << indices.size() << " indices." << std::endl;
 
 
 	// Set light properties
@@ -177,7 +73,7 @@ int main(){
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
     
     // Set the object color
-    glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
+    glm::vec3 objectColor = glm::vec3(0.1f, 0.1f, 0.1f);  // Gray
 
     
     // Set camera position (viewer's position)
@@ -210,7 +106,7 @@ int main(){
         float timeValue = glfwGetTime();    // Get the current time (in seconds)
         float angle = timeValue * glm::radians(50.0f);  // Rotate 50 degrees per second
 
-        model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate around the Y-axis
+        //model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate around the Y-axis
         
         // Set the model, view, and projection matrices
          shaderProgram.setMat4("model", model);
@@ -218,15 +114,11 @@ int main(){
          shaderProgram.setMat4("projection", projection);
 
         // Draw the mesh
-        drawMesh();
+        drawCow();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // Delete VAO and VBO
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
 
     // Terminate GLFW
     glfwDestroyWindow(window);
