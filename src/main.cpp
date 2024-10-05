@@ -20,6 +20,23 @@
 #include <filesystem>
 
 
+void checkCompileErrors(unsigned int shader, std::string type) {
+    int success;
+    char infoLog[1024];
+    if (type != "PROGRAM") {
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+            std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n";
+        }
+    } else {
+        glGetProgramiv(shader, GL_LINK_STATUS, &success);
+        if (!success) {
+            glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+            std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n";
+        }
+    }
+}
 
 int main(){
     // Initialize GLFW
@@ -49,7 +66,8 @@ int main(){
 
     // add background color
     gladLoadGL();
-    glViewport(0, 0, 1500, 1100);
+    glViewport(0, 0, 1024, 768);
+
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);  // Dark grey background
     glEnable(GL_DEPTH_TEST); // Enable depth testing
 
@@ -61,7 +79,8 @@ int main(){
     // Load object with assimp
     loadCowModel("src/models/cow.obj");
 
-
+    glm::vec3 modelPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+    setThirdPersonView(modelPosition);
 
 	// Set light properties
     glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
@@ -73,11 +92,11 @@ int main(){
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
     
     // Set the object color
-    glm::vec3 objectColor = glm::vec3(0.1f, 0.1f, 0.1f);  // Gray
+    glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
 
     
     // Set camera position (viewer's position)
-    glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
+    glm::vec3 viewPos(0.0f, 0.0f, 0.0f);
 
     // run if window is not closed and escape key is not pressed
     while(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0){
@@ -86,7 +105,7 @@ int main(){
 
         // Activate the shader program
         shaderProgram.use();
-
+        checkCompileErrors(shaderProgram.getID(), "PROGRAM");
         // compute controlls
         computeMatricesFromInputs(window);
 
@@ -102,11 +121,8 @@ int main(){
         glm::mat4 view = getViewMatrix();
         glm::mat4 projection = getProjectionMatrix();
 
-        // Rotate the model
-        float timeValue = glfwGetTime();    // Get the current time (in seconds)
-        float angle = timeValue * glm::radians(50.0f);  // Rotate 50 degrees per second
-
-        //model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate around the Y-axis
+        checkCompileErrors(shaderProgram.getID(), "PROGRAM");   
+       
         
         // Set the model, view, and projection matrices
          shaderProgram.setMat4("model", model);

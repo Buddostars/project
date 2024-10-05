@@ -1,4 +1,5 @@
 // Include GLFW
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 // Include GLM
@@ -11,27 +12,33 @@ using namespace glm;
 glm::mat4 ViewMatrix;
 glm::mat4 ProjectionMatrix;
 
+
+
+
+// Initial position 
+glm::vec3 position; 
+glm::vec3 carPosition(0.0f, 0.0f, 0.0f);
+
+// Initial horizontal angle : toward -Z
+float distanceFromModel = 10.0f;
+float horizontalAngle = 0.0f;
+float verticalAngle = 0.0f;
+
+float speed = 3.0f; // 3 units / second
+float mouseSpeed = 0.005f;
+float initialFoV = 45.0f; // Initial Field of View
+
 glm::mat4 getViewMatrix(){
 	return ViewMatrix;
 }
+
 glm::mat4 getProjectionMatrix(){
 	return ProjectionMatrix;
 }
 
-
-// Initial position : on +Z
-glm::vec3 position = glm::vec3( 0, 0, 5 ); 
-// Initial horizontal angle : toward -Z
-float horizontalAngle = 3.14f;
-// Initial vertical angle : none
-float verticalAngle = 0.0f;
-// Initial Field of View
-float initialFoV = 45.0f;
-
-float speed = 5.0f; // 3 units / second
-float mouseSpeed = 0.005f;
-
-
+void setThirdPersonView(const glm::vec3& position){
+	carPosition = position; 
+}
 
 void computeMatricesFromInputs(GLFWwindow* window){
 
@@ -94,7 +101,7 @@ void computeMatricesFromInputs(GLFWwindow* window){
 	// Camera matrix
 	ViewMatrix       = glm::lookAt(
 								position,           // Camera is here
-								position+direction, // and looks here : at the same position, plus "direction"
+								carPosition, 		// and looks here : at the same position
 								up                  // Head is up (set to 0,-1,0 to look upside-down)
 						   );
 
