@@ -114,7 +114,7 @@ int main(){
         //Set the view amd projection matrices
         glm::mat4 view = glm::lookAt(cameraPosition, carPosition, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
-        std::cout << "Camera Position: " << glm::to_string(cameraPosition) << std::endl;
+        //std::cout << "Camera Position: " << glm::to_string(cameraPosition) << std::endl;
         
         // Activate the shader program and set uniforms
         shaderProgram.use();
@@ -128,7 +128,7 @@ int main(){
         shaderProgram.setMat4("model", model);
         shaderProgram.setMat4("view", view);
         shaderProgram.setMat4("projection", projection);
-        std::cout << "Model Position: " << glm::to_string(glm::vec3(model[3])) << std::endl; // Outputs the translation part of the model matrix
+       // std::cout << "Model Position: " << glm::to_string(glm::vec3(model[3])) << std::endl; // Outputs the translation part of the model matrix
         // std::cout << "Model Matrix: " << glm::to_string(model) << std::endl;
         // std::cout << "View Matrix: " << glm::to_string(view) << std::endl;
         // std::cout << "Projection Matrix: " << glm::to_string(projection) << std::endl;

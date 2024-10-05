@@ -1,16 +1,12 @@
 #include "car.hpp"
 #include <iostream>
-
-
-
-
 #include <glm/gtc/matrix_transform.hpp> // For transformations
-// Assuming you have a struct to hold vertex data
-struct Vertex {
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec3 color; // Add color to the vertex structure
-};
+#include <cstddef>
+#include <vector> // Include vector header
+
+
+
+
 
 Car::Car() : position(glm::vec3(25.0f, 0.0f, 0.0f)), speed(10.0f) {
     // Load the car model
@@ -27,16 +23,17 @@ void Car::update(GLFWwindow* window) {
     }
 }
 
-void Car::loadModel(const std::string& path) {
+bool Car::loadModel(const std::string& path) {
     Assimp::Importer importer;
+    
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
-     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
         std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
-        return;
+        return false;
     }
     processNode(scene->mRootNode, scene);
     std::cout << "Loaded " << vertices.size() << " vertices and " << indices.size() << " indices." << std::endl;
-
+    return true;
 }
 
 void Car::processNode(aiNode* node, const aiScene* scene) {
@@ -50,16 +47,38 @@ void Car::processNode(aiNode* node, const aiScene* scene) {
 }
 
 void Car::processMesh(aiMesh* mesh, const aiScene* scene) {
-    vertices.clear();
-    indices.clear();
 
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        glm::vec3 vertex;
-        vertex.x = mesh->mVertices[i].x;
-        vertex.y = mesh->mVertices[i].y;
-        vertex.z = mesh->mVertices[i].z;
+        Vertex vertex;
+        glm::vec3 vector;
+
+
+        // Position
+        vector.x = mesh->mVertices[i].x;
+        vector.y = mesh->mVertices[i].y;
+        vector.z = mesh->mVertices[i].z;
+        vertex.position = vector;
+
+        // Normal
+        vector.x = mesh->mNormals[i].x;
+        vector.y = mesh->mNormals[i].y;
+        vector.z = mesh->mNormals[i].z;
+        vertex.normal = vector;
+
+        // Texture coordinates
+        if (mesh->mTextureCoords[0]) {
+            glm::vec2 vec;
+            vec.x = mesh->mTextureCoords[0][i].x;
+            vec.y = mesh->mTextureCoords[0][i].y;
+            vertex.TexCoords = vec;
+        } else {
+            vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+        }
+
         vertices.push_back(vertex);
     }
+
+    
 
     for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
@@ -78,14 +97,32 @@ void Car::setupMesh() {
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
+    // Vertex positions
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Vertex normals
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+    glEnableVertexAttribArray(1);
+
+    // Vertex texture coords
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+    glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
 }
+
+void Car::drawMesh() {
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
 
 void Car::render() {
     // Render the car model here

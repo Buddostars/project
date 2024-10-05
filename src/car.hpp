@@ -10,6 +10,12 @@
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing flags
 
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 normal;
+    //glm::vec3 color; // Add color to the vertex structure
+    glm::vec2 TexCoords; // Add texture coordinates to the vertex structure
+    };
 
 class Car {
 public:
@@ -25,13 +31,17 @@ private:
     glm::vec3 color;
     unsigned int VAO, VBO, EBO;
 
-    std::vector<glm::vec3> vertices;
+    std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
-    void loadModel(const std::string& path);
+    
+
+    bool loadModel(const std::string& path);
     void processNode(aiNode* node, const aiScene* scene);
     void processMesh(aiMesh* mesh, const aiScene* scene);
     void setupMesh();
+    void drawMesh();
+
 };
 
 #endif
