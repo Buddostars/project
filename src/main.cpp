@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#define GLM_ENABLE_EXPERIMENTAL
 
 #include <assimp/Importer.hpp>    // C++ importer interface 
 #include <assimp/scene.h>           // Output data structure
@@ -12,14 +13,17 @@
 #include <glm/glm.hpp>                  // For math operations (OpenGL Mathematics)
 #include <glm/gtc/matrix_transform.hpp> // For transformations
 #include <glm/gtc/type_ptr.hpp>         // For converting matrices to OpenGL-compatible pointers
+#include <glm/gtx/string_cast.hpp>      // For converting glm types to strings
+
 
 #include "shader.h"
 #include "controls.hpp"
-//#include "worldmanager.hpp"
+
 #include "car.hpp"
 #include "cow.hpp"
 
 #include <filesystem>
+
 
 
 int main(){
@@ -47,19 +51,19 @@ int main(){
     
     // Set the mouse at the center of the screen
     glfwPollEvents();
-    glfwSetCursorPos(window, 1024/2, 768/2);
+    glfwSetCursorPos(window, 1280/2, 720/2);
 
     // add background color
     gladLoadGL();
-    //glViewport(0, 0, 1500, 1100);
-    //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);  // Dark grey background
+    glViewport(0, 0, 1280, 720);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);  // Dark grey background
     glEnable(GL_DEPTH_TEST); // Enable depth testing
 
     // Create the shader program
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     
     // Load
-   // WorldManager worldManager;
+   
     Car playerCar;
     Cow cow;
 
@@ -86,48 +90,57 @@ int main(){
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
     
     // Set the object color
-    glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
+    glm::vec3 objectColor = glm::vec3(1.0f, 1.0f, 1.0f);  // Gray
 
     
     // Set camera position (viewer's position)
-    glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
+    glm::vec3 cameraOffset = glm::vec3(0.0f, 0.1f, -0.3f);
 
     // run if window is not closed and escape key is not pressed
     while(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0){
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the screen
 
-        // Activate the shader program
-        shaderProgram.use();
+        
 
         // compute controlls
-        computeMatricesFromInputs(window);
+        // computeMatricesFromInputs(window);
+        playerCar.update(window);
 
-        // Set lighting uniforms
+        //Camera following the car
+        glm::vec3 carPosition = playerCar.getPosition();
+        glm::vec3 cameraPosition = playerCar.getPosition() + cameraOffset;
+        
+        //Set the view amd projection matrices
+        glm::mat4 view = glm::lookAt(cameraPosition, carPosition, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
+        std::cout << "Camera Position: " << glm::to_string(cameraPosition) << std::endl;
+        
+        // Activate the shader program and set uniforms
+        shaderProgram.use();
         shaderProgram.setVec3("lightPos", lightPos);
         shaderProgram.setVec3("lightDirection", lightDirection);
         shaderProgram.setVec3("lightColor", lightColor);
-        shaderProgram.setVec3("viewPos", viewPos);
-        shaderProgram.setVec3("objectColor", objectColor);
+        
 
-        // Set any uniform variables (like model, view, projection matrices)
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = getViewMatrix();
-        glm::mat4 projection = getProjectionMatrix();
-
-        // Update world based on car position
-        //worldManager.update(playerCar.getPosition());
-
-        // Update the car movement
-        playerCar.update(window);
+        // Set model martix for the car
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), carPosition);
+        shaderProgram.setMat4("model", model);
+        shaderProgram.setMat4("view", view);
+        shaderProgram.setMat4("projection", projection);
+        std::cout << "Model Position: " << glm::to_string(glm::vec3(model[3])) << std::endl; // Outputs the translation part of the model matrix
+        // std::cout << "Model Matrix: " << glm::to_string(model) << std::endl;
+        // std::cout << "View Matrix: " << glm::to_string(view) << std::endl;
+        // std::cout << "Projection Matrix: " << glm::to_string(projection) << std::endl;
+        // Update and render the car
+        
         playerCar.render();
 
         // Update the cow movement
         cow.update();
         cow.render();
 
-        // Draw the world
-        //worldManager.draw();
+        
 
         // Rotate the model
         // float timeValue = glfwGetTime();    // Get the current time (in seconds)
@@ -135,10 +148,6 @@ int main(){
 
         //model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate around the Y-axis
         
-        // Set the model, view, and projection matrices
-         shaderProgram.setMat4("model", model);
-         shaderProgram.setMat4("view", view);
-         shaderProgram.setMat4("projection", projection);
 
         // Draw the mesh
         //drawMesh();
@@ -146,10 +155,7 @@ int main(){
         glfwPollEvents();
     }
 
-    // Delete VAO and VBO
-    // glDeleteVertexArrays(1, &VAO);
-    // glDeleteBuffers(1, &VBO);
-    // glDeleteBuffers(1, &EBO);
+    
 
     // Terminate GLFW
     glfwDestroyWindow(window);
