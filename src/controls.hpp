@@ -9,9 +9,11 @@
 glm::mat4 getViewMatrix();
 glm::mat4 getProjectionMatrix();
 
-void computeMatricesFromInputs(GLFWwindow* window);
+void computeMatricesFromInputs(GLFWwindow* window, float deltaTime);
 
 //third person view
-void setThirdPersonView(const glm::vec3& position);
+void setThirdPersonView(const glm::vec3& position, const glm::vec3& direction);
+
+void updateModelPosition(GLFWwindow* window, float deltaTime);
 
 #endif

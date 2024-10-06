@@ -80,7 +80,8 @@ int main(){
     loadCowModel("src/models/cow.obj");
 
     glm::vec3 modelPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-    setThirdPersonView(modelPosition);
+    float modelAngle = 0.0f; // Initialize modelAngle
+    
 
 	// Set light properties
     glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
@@ -98,16 +99,31 @@ int main(){
     // Set camera position (viewer's position)
     glm::vec3 viewPos(0.0f, 0.0f, 0.0f);
 
+    // Initialize time variables
+    float lastTime = glfwGetTime();
+
     // run if window is not closed and escape key is not pressed
     while(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0){
-
+        float currentTime = glfwGetTime();
+        float deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the screen
 
+
+       
+        
+        
+        // Update the model position
+        updateModelPosition(window, deltaTime);
+        // compute controlls
+        computeMatricesFromInputs(window, deltaTime);
+
+        setThirdPersonView(modelPosition, glm::vec3(0.0f, 0.0f, -1.0f));
+
+       
+        
         // Activate the shader program
         shaderProgram.use();
-        checkCompileErrors(shaderProgram.getID(), "PROGRAM");
-        // compute controlls
-        computeMatricesFromInputs(window);
 
         // Set lighting uniforms
         shaderProgram.setVec3("lightPos", lightPos);
@@ -118,6 +134,8 @@ int main(){
 
         // Set any uniform variables (like model, view, projection matrices)
         glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, modelPosition);
+        model = glm::rotate(model, modelAngle, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 view = getViewMatrix();
         glm::mat4 projection = getProjectionMatrix();
 
