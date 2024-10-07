@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <unistd.h>
 #include <vector>
 
 #include <assimp/Importer.hpp>    // C++ importer interface 
@@ -119,6 +120,11 @@ void processNode(aiNode* node, const aiScene* scene) {
 }
 
 int main(){
+    // change working directory to the project root only on mac needed
+    #ifdef __APPLE__
+        chdir("..");
+    #endif
+
     // Initialize GLFW
     if (!glfwInit()) {
     std::cout << "Failed to initialize GLFW" << std::endl;

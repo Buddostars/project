@@ -32,9 +32,6 @@
                 "-Wno-deprecated",
                 "-Wl,-rpath,${workspaceFolder}/dependencies/osx/library"
             ],
-            "options": {
-                "cwd": "${fileDirname}"
-            },
             "problemMatcher": [
                 "$gcc"
             ],
