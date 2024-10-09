@@ -136,14 +136,14 @@ void processNode(aiNode* node, const aiScene* scene) {
 void renderQuad(float x, float y, float width, float height, glm::vec3 color) {
     // Define the quad vertices
     float vertices[] = {
-        // Positions       // Colors
-        x,          y + height, color.r, color.g, color.b,
-        x,          y,          color.r, color.g, color.b,
-        x + width,  y,          color.r, color.g, color.b,
+        // Positions         // Colors
+        x,          y + height,  color.r, color.g, color.b,
+        x,          y,           color.r, color.g, color.b,
+        x + width,  y,           color.r, color.g, color.b,
 
-        x,          y + height, color.r, color.g, color.b,
-        x + width,  y,          color.r, color.g, color.b,
-        x + width,  y + height, color.r, color.g, color.b
+        x,          y + height,  color.r, color.g, color.b,
+        x + width,  y,           color.r, color.g, color.b,
+        x + width,  y + height,  color.r, color.g, color.b
     };
 
     // Setup VAO and VBO if not already done
@@ -166,17 +166,17 @@ void renderQuad(float x, float y, float width, float height, glm::vec3 color) {
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
     }
 
-    // Render the quad
-    // Use a simple shader for rendering the quad
-    Shader quadShader("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
+    // Render the quad using the new quad shaders
+    Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
     quadShader.use();
     glm::mat4 projection = glm::ortho(0.0f, 1024.0f, 0.0f, 768.0f);
     quadShader.setMat4("projection", projection);
-    
+
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
+
 
 
 // Renders the button and its text
@@ -187,7 +187,8 @@ void renderButton(float x, float y, float width, float height, const std::string
     // Render the button text centered on the button
     float textWidth = textRenderer.CalculateTextWidth(text, 1.0f);
     float textX = x + (width - textWidth) / 2.0f;
-    float textY = y + (height - 24.0f) / 2.0f; // Adjust as needed
+    float textY = y + (height - (24.0f * 0.6f)) / 2.0f; // Adjust as needed
+
 
     textRenderer.RenderText(text, textX, textY, 1.0f, glm::vec3(1.0f));
 }
@@ -201,14 +202,18 @@ void renderLoadingScreen(TextRenderer& textRenderer) {
     // Set up orthographic projection for 2D rendering
     glm::mat4 projection = glm::ortho(0.0f, 1024.0f, 0.0f, 768.0f);
 
-    // Use the text shader and set the projection matrix
+    // For text rendering
     textRenderer.SetProjection(projection);
 
+    // For quad rendering
+    Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag"); // Create quad shader and user it locally
+    quadShader.use();
+    quadShader.setMat4("projection", projection);
 
     // Disable depth testing so 2D elements are rendered on top
     glDisable(GL_DEPTH_TEST);
 
-    // Render the title
+    // Render the title using the text renderer
     textRenderer.RenderText("Cows n Cars", 362.0f, 500.0f, 1.5f, glm::vec3(1.0f));
 
     // Render the "Start" button
@@ -217,6 +222,7 @@ void renderLoadingScreen(TextRenderer& textRenderer) {
     // Re-enable depth testing for 3D rendering
     glEnable(GL_DEPTH_TEST);
 }
+
 
 // Handles inputs on the loading screen. Detects when the user clicks "Start" and changes to the game state
 void processMenuInput(GLFWwindow* window) {

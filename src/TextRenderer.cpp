@@ -66,7 +66,7 @@ void TextRenderer::LoadCharacters() {
     Characters.clear();
 
     // Font size
-    float fontSize = 48.0f;
+    float fontSize = 24.0f;
     float scale = stbtt_ScaleForPixelHeight(&font, fontSize);
 
     int ascent, descent, lineGap;
@@ -112,7 +112,7 @@ void TextRenderer::LoadCharacters() {
             texture,
             glm::ivec2(width, height),
             glm::ivec2(xoff, yoff),
-            static_cast<GLuint>(advanceWidth * scale)
+            advanceWidth
         };
         Characters.insert(std::pair<char, Character>(c, character));
 
@@ -185,8 +185,8 @@ void TextRenderer::RenderText(const std::string& text, float x, float y, float s
         // Render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        // Advance cursor to the next glyph, taking into account the advance value
-        x += (ch.Advance >> 6) * scale; // Bitshift by 6 to convert from 1/64 pixels to pixels
+        // Advance cursor to the next glyph
+        x += static_cast<float>(ch.Advance) * scale;
     }
 
     glBindVertexArray(0);
@@ -197,16 +197,17 @@ void TextRenderer::RenderText(const std::string& text, float x, float y, float s
 }
 
 
+
 // Calculate the width of the text string
 float TextRenderer::CalculateTextWidth(const std::string& text, float scale) {
     float width = 0.0f;
-    std::string::const_iterator c;
-    for (c = text.begin(); c != text.end(); c++) {
-        Character ch = Characters[*c];
-        width += (ch.Advance >> 6) * scale; // Bitshift by 6 to convert from 1/64 pixels to pixels
+    for (char c : text) {
+        Character ch = Characters[c];
+        width += static_cast<float>(ch.Advance) * scale;
     }
     return width;
 }
+
 
 void TextRenderer::SetProjection(glm::mat4 projection) {
     textShader.use();
