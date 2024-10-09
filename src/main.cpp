@@ -6,9 +6,8 @@
 #include <vector>
 
 #include <assimp/Importer.hpp>    // C++ importer interface 
-#include <assimp/scene.h>           // Output data structure
-#include <assimp/postprocess.h>     // Post processing flags
-
+#include <assimp/scene.h>         // Output data structure
+#include <assimp/postprocess.h>   // Post processing flags
 
 #include <glm/glm.hpp>                  // For math operations (OpenGL Mathematics)
 #include <glm/gtc/matrix_transform.hpp> // For transformations
@@ -18,6 +17,19 @@
 #include "controls.hpp"
 
 #include <filesystem>
+
+#include "TextRenderer.h"
+
+// Define the GameState enum before using it
+enum GameState {
+    STATE_MENU,
+    STATE_GAME,
+    STATE_PAUSE,
+    // Add more later if required
+};
+
+// Global variable for game state
+GameState currentState = STATE_MENU;
 
 struct Vertex {
     glm::vec3 Position;
@@ -119,52 +131,157 @@ void processNode(aiNode* node, const aiScene* scene) {
     }
 }
 
-int main(){
-    // change working directory to the project root only on mac needed
+
+// Renders a simple colored quad (rectangle)
+void renderQuad(float x, float y, float width, float height, glm::vec3 color) {
+    // Define the quad vertices
+    float vertices[] = {
+        // Positions       // Colors
+        x,          y + height, color.r, color.g, color.b,
+        x,          y,          color.r, color.g, color.b,
+        x + width,  y,          color.r, color.g, color.b,
+
+        x,          y + height, color.r, color.g, color.b,
+        x + width,  y,          color.r, color.g, color.b,
+        x + width,  y + height, color.r, color.g, color.b
+    };
+
+    // Setup VAO and VBO if not already done
+    static unsigned int quadVAO = 0, quadVBO;
+    if (quadVAO == 0) {
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+
+        glEnableVertexAttribArray(0); // Position attribute
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+
+        glEnableVertexAttribArray(1); // Color attribute
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+    } else {
+        // Update vertex data
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+    }
+
+    // Render the quad
+    // Use a simple shader for rendering the quad
+    Shader quadShader("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
+    quadShader.use();
+    glm::mat4 projection = glm::ortho(0.0f, 1024.0f, 0.0f, 768.0f);
+    quadShader.setMat4("projection", projection);
+    
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+}
+
+
+// Renders the button and its text
+void renderButton(float x, float y, float width, float height, const std::string& text, TextRenderer& textRenderer) {
+    // Render button rectangle
+    renderQuad(x, y, width, height, glm::vec3(0.2f, 0.2f, 0.8f));
+
+    // Render the button text centered on the button
+    float textWidth = textRenderer.CalculateTextWidth(text, 1.0f);
+    float textX = x + (width - textWidth) / 2.0f;
+    float textY = y + (height - 24.0f) / 2.0f; // Adjust as needed
+
+    textRenderer.RenderText(text, textX, textY, 1.0f, glm::vec3(1.0f));
+}
+
+// Function to render the loading screen. Uses OpenGL primitives to draw the title and start button
+// ToDo: Add background image of cars and cows
+void renderLoadingScreen(TextRenderer& textRenderer) {
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Set up orthographic projection for 2D rendering
+    glm::mat4 projection = glm::ortho(0.0f, 1024.0f, 0.0f, 768.0f);
+
+    // Use the text shader and set the projection matrix
+    textRenderer.SetProjection(projection);
+
+
+    // Disable depth testing so 2D elements are rendered on top
+    glDisable(GL_DEPTH_TEST);
+
+    // Render the title
+    textRenderer.RenderText("Cows n Cars", 362.0f, 500.0f, 1.5f, glm::vec3(1.0f));
+
+    // Render the "Start" button
+    renderButton(412.0f, 300.0f, 200.0f, 80.0f, "Start", textRenderer);
+
+    // Re-enable depth testing for 3D rendering
+    glEnable(GL_DEPTH_TEST);
+}
+
+// Handles inputs on the loading screen. Detects when the user clicks "Start" and changes to the game state
+void processMenuInput(GLFWwindow* window) {
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+
+        // Convert to OpenGL coordinate system if necessary
+        ypos = 768.0 - ypos; // Invert Y coordinate
+
+        // Check if the cursor is within the bounds of the "Start" button
+        if (xpos >= 412.0 && xpos <= 612.0 && ypos >= 300.0 && ypos <= 380.0) {
+            currentState = STATE_GAME;
+        }
+    }
+}
+
+int main() {
+    // Change working directory to the project root only on Mac needed
     #ifdef __APPLE__
         chdir("..");
     #endif
 
     // Initialize GLFW
     if (!glfwInit()) {
-    std::cout << "Failed to initialize GLFW" << std::endl;
-    return -1;
+        std::cout << "Failed to initialize GLFW" << std::endl;
+        return -1;
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create a window
-    GLFWwindow* window = glfwCreateWindow(1024, 768, "OpenGL", NULL, NULL);
-    if(window == NULL){
+    GLFWwindow* window = glfwCreateWindow(1024, 768, "Cows n Cars", NULL, NULL);
+    if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
     }
     glfwMakeContextCurrent(window);
 
-    // Hide the mouse and enable unlimited movement
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    
-    // Set the mouse at the center of the screen
-    glfwPollEvents();
-    glfwSetCursorPos(window, 1024/2, 768/2);
+    // Load OpenGL functions using GLAD
+    if (!gladLoadGL()) {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
 
-    // add background color
-    gladLoadGL();
-    glViewport(0, 0, 1500, 1100);
+    // Set viewport size
+    glViewport(0, 0, 1024, 768);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);  // Dark grey background
     glEnable(GL_DEPTH_TEST); // Enable depth testing
 
-    // Create the shader program
+    // Create shader programs
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
-    
+    Shader textShader("src/shaders/text_shader.vert", "src/shaders/text_shader.frag");
+
+    // Initialize Text Renderer
+    TextRenderer textRenderer("src/fonts/arial.ttf", textShader);
 
     std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
-    // Load object with assimp
+
+    // Load object with Assimp
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile("src/models/cow.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
         return -1;
     }
@@ -172,61 +289,73 @@ int main(){
     processNode(scene->mRootNode, scene);
     std::cout << "Loaded " << vertices.size() << " vertices and " << indices.size() << " indices." << std::endl;
 
-
-	// Set light properties
+    // Set light properties
     glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
-    
+
     // Set the directional light's direction pointing downwards
     glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
-    
+
     // Set the light color (like sunlight)
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
-    
+
     // Set the object color
     glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
 
-    
     // Set camera position (viewer's position)
     glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
 
-    // run if window is not closed and escape key is not pressed
-    while(glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0){
+    // Main loop
+    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
+        glfwPollEvents(); // Process events
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the screen
+        // Clear the screen
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Activate the shader program
-        shaderProgram.use();
+        if (currentState == STATE_MENU) {
+            // Show the cursor in the menu
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-        // compute controlls
-        computeMatricesFromInputs(window);
+            // Process menu input
+            processMenuInput(window);
 
-        // Set lighting uniforms
-        shaderProgram.setVec3("lightPos", lightPos);
-        shaderProgram.setVec3("lightDirection", lightDirection);
-        shaderProgram.setVec3("lightColor", lightColor);
-        shaderProgram.setVec3("viewPos", viewPos);
-        shaderProgram.setVec3("objectColor", objectColor);
+            // Render the loading screen
+            renderLoadingScreen(textRenderer);
+        } else if (currentState == STATE_GAME) {
+            // Hide the cursor during the game
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-        // Set any uniform variables (like model, view, projection matrices)
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = getViewMatrix();
-        glm::mat4 projection = getProjectionMatrix();
+            // Activate the shader program
+            shaderProgram.use();
 
-        // Rotate the model
-        float timeValue = glfwGetTime();    // Get the current time (in seconds)
-        float angle = timeValue * glm::radians(50.0f);  // Rotate 50 degrees per second
+            // Compute controls
+            computeMatricesFromInputs(window);
 
-        model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate around the Y-axis
-        
-        // Set the model, view, and projection matrices
-         shaderProgram.setMat4("model", model);
-         shaderProgram.setMat4("view", view);
-         shaderProgram.setMat4("projection", projection);
+            // Set lighting uniforms
+            shaderProgram.setVec3("lightPos", lightPos);
+            shaderProgram.setVec3("lightDirection", lightDirection);
+            shaderProgram.setVec3("lightColor", lightColor);
+            shaderProgram.setVec3("viewPos", viewPos);
+            shaderProgram.setVec3("objectColor", objectColor);
 
-        // Draw the mesh
-        drawMesh();
+            // Set the model, view, and projection matrices
+            glm::mat4 model = glm::mat4(1.0f);
+            glm::mat4 view = getViewMatrix();
+            glm::mat4 projection = getProjectionMatrix();
+
+            // Rotate the model
+            float timeValue = glfwGetTime();
+            float angle = timeValue * glm::radians(50.0f);
+            model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+
+            shaderProgram.setMat4("model", model);
+            shaderProgram.setMat4("view", view);
+            shaderProgram.setMat4("projection", projection);
+
+            // Draw the mesh
+            drawMesh();
+        }
+
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     // Delete VAO and VBO
