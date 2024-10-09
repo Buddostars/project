@@ -174,7 +174,14 @@ void renderQuad(float x, float y, float width, float height, glm::vec3 color) {
 
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // Reset any OpenGL states that might affext text rendering
+    // At the end of renderQuad()
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+
 }
 
 
@@ -185,12 +192,12 @@ void renderButton(float x, float y, float width, float height, const std::string
     renderQuad(x, y, width, height, glm::vec3(0.2f, 0.2f, 0.8f));
 
     // Render the button text centered on the button
-    float textWidth = textRenderer.CalculateTextWidth(text, 1.0f);
+    float scale = 1.0f; // Adjust as needed
+    float textWidth = textRenderer.CalculateTextWidth(text, scale);
     float textX = x + (width - textWidth) / 2.0f;
-    float textY = y + (height - (24.0f * 0.6f)) / 2.0f; // Adjust as needed
+    float textY = y + (height - (24.0f * scale)) / 2.0f; // Assuming fontSize is 24.0f
 
-
-    textRenderer.RenderText(text, textX, textY, 1.0f, glm::vec3(1.0f));
+    textRenderer.RenderText(text, textX, textY, scale, glm::vec3(1.0f));
 }
 
 // Function to render the loading screen. Uses OpenGL primitives to draw the title and start button

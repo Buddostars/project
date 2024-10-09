@@ -107,12 +107,16 @@ void TextRenderer::LoadCharacters() {
         int advanceWidth, leftSideBearing;
         stbtt_GetCodepointHMetrics(&font, c, &advanceWidth, &leftSideBearing);
 
+        // Convert metrics to pixels
+        float advance = advanceWidth * scale;
+        float bearingX = leftSideBearing * scale;
+
         // Now store character for later use
         Character character = {
             texture,
             glm::ivec2(width, height),
-            glm::ivec2(xoff, yoff),
-            advanceWidth
+            glm::vec2(bearingX, yoff), // yoff is already in pixels
+            advance
         };
         Characters.insert(std::pair<char, Character>(c, character));
 
@@ -120,6 +124,7 @@ void TextRenderer::LoadCharacters() {
         stbtt_FreeBitmap(bitmap, NULL);
     }
 }
+
 
 // Configure VAO/VBO for texture quads
 void TextRenderer::SetupRenderData() {
@@ -147,6 +152,7 @@ void TextRenderer::RenderText(const std::string& text, float x, float y, float s
     // Activate corresponding render state
     textShader.use();
     textShader.setVec3("textColor", color);
+    textShader.setInt("text", 0); // Ensure the 'text' uniform is set
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(VAO);
 
@@ -159,7 +165,7 @@ void TextRenderer::RenderText(const std::string& text, float x, float y, float s
         Character ch = Characters[c];
 
         float xpos = x + ch.Bearing.x * scale;
-        float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+        float ypos = y - (ch.Bearing.y * scale);
 
         float w = ch.Size.x * scale;
         float h = ch.Size.y * scale;
@@ -186,7 +192,7 @@ void TextRenderer::RenderText(const std::string& text, float x, float y, float s
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
         // Advance cursor to the next glyph
-        x += static_cast<float>(ch.Advance) * scale;
+        x += ch.Advance * scale;
     }
 
     glBindVertexArray(0);
@@ -198,12 +204,13 @@ void TextRenderer::RenderText(const std::string& text, float x, float y, float s
 
 
 
+
 // Calculate the width of the text string
 float TextRenderer::CalculateTextWidth(const std::string& text, float scale) {
     float width = 0.0f;
     for (char c : text) {
         Character ch = Characters[c];
-        width += static_cast<float>(ch.Advance) * scale;
+        width += ch.Advance * scale;
     }
     return width;
 }
