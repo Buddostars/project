@@ -1,0 +1,11 @@
+﻿  main.cpp
+main.obj : error LNK2019: unresolved external symbol glfwInit referenced in function main
+main.obj : error LNK2019: unresolved external symbol glfwTerminate referenced in function main
+main.obj : error LNK2019: unresolved external symbol glfwCreateWindow referenced in function main
+main.obj : error LNK2019: unresolved external symbol glfwWindowShouldClose referenced in function main
+main.obj : error LNK2019: unresolved external symbol glfwPollEvents referenced in function main
+main.obj : error LNK2019: unresolved external symbol glfwSwapBuffers referenced in function main
+C:\OpenGL\glew\glew-2.1.0\lib\Release\Win32\glew32.lib : warning LNK4272: library machine type 'x86' conflicts with target machine type 'x64'
+C:\OpenGL\glfw\glfw-3.4.bin.WIN32\lib-vc2022\glfw3.lib : warning LNK4272: library machine type 'x86' conflicts with target machine type 'x64'
+C:\OpenGL\glfw\glfw-3.4.bin.WIN32\lib-vc2022\glfw3dll.lib : warning LNK4272: library machine type 'x86' conflicts with target machine type 'x64'
+C:\Users\Jon\Documents\PBRtest\x64\Debug\PBRtest.exe : fatal error LNK1120: 6 unresolved externals
