@@ -21,7 +21,8 @@
 
 #include <filesystem>
 
-#include "TextRenderer.h"
+#include "globals.h"    // For shared global variables 
+#include "vertex.h"
 
 // Define the GameState enum before using it
 enum GameState {
@@ -31,15 +32,10 @@ enum GameState {
     // Add more later if required
 };
 
-// Global variables
+// Game state variable
 GameState currentState = STATE_MENU;
 
-struct Vertex {
-    glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 TexCoords;
-};
-
+// Define the global variables (in globals.h)
 std::vector<Vertex> vertices;
 std::vector<unsigned int> indices;
 unsigned int VAO, VBO, EBO;
@@ -98,8 +94,8 @@ int main() {
     // **Add the quadShader for rendering the loading screen**
     Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
 
-    // Initialize Text Renderer
-    TextRenderer textRenderer("src/fonts/arial.ttf", textShader);
+    // Initialize Text Renderer - Not used
+    // TextRenderer textRenderer("src/fonts/arial.ttf", textShader);
 
     std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
 
