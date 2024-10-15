@@ -12,7 +12,7 @@ uniform vec3 viewPos;     // Position of the camera/viewer
 
 void main() {
     // Ambient lighting
-    float ambientStrength = 0.1;
+    float ambientStrength = 0.2; // Increased ambient strength for better base illumination
     vec3 ambient = ambientStrength * lightColor;
 
     // Diffuse lighting (Lambert's cosine law)
@@ -22,10 +22,10 @@ void main() {
     vec3 diffuse = diff * lightColor;
 
     // Specular lighting (Phong model)
-    float specularStrength = 0.5;
+    float specularStrength = 0.7; // Increased specular strength for more shininess
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64); // Increased shininess exponent for sharper highlights
     vec3 specular = specularStrength * spec * lightColor;
 
     // Combine all components
