@@ -50,13 +50,12 @@ unsigned int loadingScreenTexture;
 // Function declarations (prototypes) for functions used in main
 void processNode(aiNode* node, const aiScene* scene);
 void processMenuInput(GLFWwindow* window);
-void renderLoadingScreen(unsigned int backgroundTexture);
+void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader); // Updated
 void drawMesh();
 void renderQuad(float x, float y, float width, float height);
 void processMesh(aiMesh* mesh, const aiScene* scene);
 void setupMesh();
 
-// Main Function
 int main() {
     // Change working directory to the project root only on Mac needed
     #ifdef __APPLE__
@@ -96,6 +95,9 @@ int main() {
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader textShader("src/shaders/text_shader.vert", "src/shaders/text_shader.frag");
 
+    // **Add the quadShader for rendering the loading screen**
+    Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
+
     // Initialize Text Renderer
     TextRenderer textRenderer("src/fonts/arial.ttf", textShader);
 
@@ -103,6 +105,14 @@ int main() {
 
     // Load the loading screen image as a texture
     loadingScreenTexture = loadTexture("src/loading-screen-image.png");
+
+    // Check if the texture was loaded successfully
+    if (loadingScreenTexture == 0) {
+        std::cout << "Failed to load loading screen texture." << std::endl;
+        return -1;
+    } else {
+        std::cout << "Loading screen texture loaded successfully. ID: " << loadingScreenTexture << std::endl;
+    }
 
     // Load object with Assimp
     Assimp::Importer importer;
@@ -152,7 +162,7 @@ int main() {
             processMenuInput(window);
 
             // Render the loading screen with background image
-            renderLoadingScreen(loadingScreenTexture);
+            renderLoadingScreen(loadingScreenTexture, quadShader); // Pass quadShader
         } else if (currentState == STATE_GAME) {
             // Hide the cursor during the game
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -297,16 +307,15 @@ void processNode(aiNode* node, const aiScene* scene) {
 // Function: renderQuad
 // Renders a quad (rectangle) for rendering the background image
 void renderQuad(float x, float y, float width, float height) {
-    // Define the quad vertices with positions and texture coordinates
     float vertices[] = {
-        // Positions        // Texture Coords
-        x,          y + height,  0.0f, 1.0f,
-        x,          y,           0.0f, 0.0f,
-        x + width,  y,           1.0f, 0.0f,
+        // Positions          // Texture Coords
+        x,          y + height,  0.0f, 1.0f, // Top-left
+        x,          y,           0.0f, 0.0f, // Bottom-left
+        x + width,  y,           1.0f, 0.0f, // Bottom-right
 
-        x,          y + height,  0.0f, 1.0f,
-        x + width,  y,           1.0f, 0.0f,
-        x + width,  y + height,  1.0f, 1.0f
+        x,          y + height,  0.0f, 1.0f, // Top-left
+        x + width,  y,           1.0f, 0.0f, // Bottom-right
+        x + width,  y + height,  1.0f, 1.0f  // Top-right
     };
 
     // Setup VAO and VBO if not already done
@@ -342,7 +351,7 @@ void renderQuad(float x, float y, float width, float height) {
 
 // Function: renderLoadingScreen
 // Function to render the loading screen with a background image
-void renderLoadingScreen(unsigned int backgroundTexture) {
+void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Disable depth testing so 2D elements are rendered on top
@@ -352,7 +361,6 @@ void renderLoadingScreen(unsigned int backgroundTexture) {
     glm::mat4 projection = glm::ortho(0.0f, 1024.0f, 0.0f, 768.0f);
 
     // Use the quad shader
-    Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
     quadShader.use();
     quadShader.setMat4("projection", projection);
 
@@ -371,6 +379,7 @@ void renderLoadingScreen(unsigned int backgroundTexture) {
     glEnable(GL_DEPTH_TEST);
 }
 
+
 // Function: processMenuInput
 // Handles inputs on the loading screen. Detects when the user clicks "Start" and changes to the game state
 void processMenuInput(GLFWwindow* window) {
@@ -382,7 +391,7 @@ void processMenuInput(GLFWwindow* window) {
         ypos = 768.0 - ypos; // Invert Y coordinate
 
         // Check if the cursor is within the bounds of the "Start" button
-        if (xpos >= 412.0 && xpos <= 612.0 && ypos >= 300.0 && ypos <= 380.0) {
+        if (xpos >= 337.0 && xpos <= 687.0 && ypos >= 430.0 && ypos <= 500.0) {
             currentState = STATE_GAME;
         }
     }
