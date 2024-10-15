@@ -1,10 +1,17 @@
+// c_cpp_properties.json
 {
     "configurations": [
         {
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/src"
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/dependencies/include"   // This should cover all of the below
+                // "${workspaceFolder}/dependencies/include/glad",
+                // "${workspaceFolder}/dependencies/include/GLFW",
+                // "${workspaceFolder}/dependencies/include/assimp",
+                // "${workspaceFolder}/dependencies/include/glm",
+                // "${workspaceFolder}/dependencies/include/KHR"
             ],
             "defines": [
                 "_DEBUG",

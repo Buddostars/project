@@ -4,14 +4,12 @@
 #ifndef TEXTURE_LOADER_H
 #define TEXTURE_LOADER_H
 
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <string>
 
 // No need to define STB_IMAGE_IMPLEMENTATION here
-#include "../third_party/stb_image.h"
+#include "../dependencies/include/stb_image.h"
 
 unsigned int loadTexture(const std::string& path);
 
 #endif
-
-
