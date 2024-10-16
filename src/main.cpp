@@ -10,7 +10,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "shader.h"
 #include "controls.hpp"
-#include "ground.hpp"
 #include "model.hpp"
 #include <filesystem>
 #include <thread>  // Include this for std::this_thread::sleep_for
