@@ -17,7 +17,6 @@
 
 #include "shader.h"
 #include "controls.hpp"
-#include "ground.hpp"
 #include "model.hpp"
 
 
