@@ -1,40 +1,32 @@
-// cow.cpp
-#include "cow.hpp"
-#include "globals.h"
-
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "model.hpp"
+#include <glad/glad.h>
 #include <iostream>
 
-void loadCowModel(const std::string& path) {
+Model::Model(const std::string& path) {
+    loadModel(path);
+}
+
+void Model::loadModel(const std::string& path) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
-    
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
         return;
     }
-
-    processCowNode(scene->mRootNode, scene);
-    std::cout << "Loaded " << vertices.size() << " vertices and " << indices.size() << " indices." << std::endl;
+    processNode(scene->mRootNode, scene);
 }
 
-void processCowNode(aiNode* node, const aiScene* scene) {
+void Model::processNode(aiNode* node, const aiScene* scene) {
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        processCowMesh(mesh, scene);
+        processMesh(mesh, scene);
     }
-    
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        processCowNode(node->mChildren[i], scene);
+        processNode(node->mChildren[i], scene);
     }
 }
 
-void processCowMesh(aiMesh* mesh, const aiScene* scene) {
+void Model::processMesh(aiMesh* mesh, const aiScene* scene) {
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
         glm::vec3 vector;
@@ -68,10 +60,10 @@ void processCowMesh(aiMesh* mesh, const aiScene* scene) {
         }
     }
 
-    setupCowMesh();
+    setupMesh();
 }
 
-void setupCowMesh() {
+void Model::setupMesh() {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -96,7 +88,7 @@ void setupCowMesh() {
     glBindVertexArray(0);
 }
 
-void drawCow() {
+void Model::draw(Shader& shader) {
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
