@@ -9,11 +9,17 @@
 #include <glm/glm.hpp>                  // For math operations (OpenGL Mathematics)
 #include <glm/gtc/matrix_transform.hpp> // For transformations
 #include <glm/gtc/type_ptr.hpp>         // For converting matrices to OpenGL-compatible pointers
+#include <cmath>
+#include <random>
+#include <thread>  // Include this for std::this_thread::sleep_for
+#include <chrono>  // Include this for std::chrono::milliseconds
+#include <unordered_set>
 
 #include "shader.h"
 #include "controls.hpp"
-#include "cow.hpp"
 #include "texture_loader.h" // For loading the background image as texture
+#include "model.hpp"
+#include "globals.hpp"
 
 // Define the GameState enum before using it
 enum GameState {
@@ -23,8 +29,193 @@ enum GameState {
     // Add more later if required
 };
 
+
 // Game state variable
 GameState currentState = STATE_MENU;
+
+struct Vec3Hash {
+    std::size_t operator()(const glm::vec3& v) const {
+        return std::hash<float>()(v.x) ^ std::hash<float>()(v.y) ^ std::hash<float>()(v.z);
+    }
+};
+
+// Function to initialize GLFW
+GLFWwindow* initializeWindow() {
+    // Change working directory to the project root only on Mac needed
+    #ifdef __APPLE__
+        chdir("..");
+    #endif
+    if (!glfwInit()) {
+        std::cout << "Failed to initialize GLFW" << std::endl;
+        return nullptr;
+    }
+    
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* window = glfwCreateWindow(1024, 768, "Cows n Cars", NULL, NULL);
+    if (window == NULL) {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return nullptr;
+    }
+
+    glfwMakeContextCurrent(window);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwPollEvents();
+    glfwSetCursorPos(window, 1024 / 2, 768 / 2);
+
+    // Load OpenGL functions
+    gladLoadGL();
+    glViewport(0, 0, 1024, 768);
+    glEnable(GL_DEPTH_TEST); // Enable depth testing
+    glClearColor(0.68f, 0.85f, 0.9f, 1.0f);  // Light blue color
+    return window;
+}
+
+// Function to set up the mesh
+void setupMesh() {
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+}
+
+// Function to draw the mesh
+void drawMesh() {
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
+// Function to process mesh data
+void processMesh(aiMesh* mesh, const aiScene* scene) {
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        Vertex vertex;
+        glm::vec3 vector;
+
+        vector.x = mesh->mVertices[i].x;
+        vector.y = mesh->mVertices[i].y;
+        vector.z = mesh->mVertices[i].z;
+        vertex.Position = vector;
+
+        vector.x = mesh->mNormals[i].x;
+        vector.y = mesh->mNormals[i].y;
+        vector.z = mesh->mNormals[i].z;
+        vertex.Normal = vector;
+
+        if (mesh->mTextureCoords[0]) {
+            glm::vec2 vec;
+            vec.x = mesh->mTextureCoords[0][i].x;
+            vec.y = mesh->mTextureCoords[0][i].y;
+            vertex.TexCoords = vec;
+        } else {
+            vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+        }
+
+        vertices.push_back(vertex);
+    }
+
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+        aiFace face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++) {
+            indices.push_back(face.mIndices[j]);
+        }
+    }
+
+    setupMesh();
+}
+
+// Function to process node
+void processNode(aiNode* node, const aiScene* scene) {
+    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        processMesh(mesh, scene);
+    }
+
+    for (unsigned int i = 0; i < node->mNumChildren; i++) {
+        processNode(node->mChildren[i], scene);
+    }
+}
+
+// Function to load model
+bool loadModel(const std::string& path) {
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+        std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+        return false;
+    }
+
+    processNode(scene->mRootNode, scene);
+    return true;
+}
+
+// Function to set light and object properties
+void setLightingAndObjectProperties(Shader& shader) {
+    glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
+    glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
+    glm::vec3 lightColor(1.0f, 1.0f, 0.9f);
+    glm::vec3 objectColor(0.6f, 0.6f, 0.6f);
+    glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
+
+    shader.setVec3("lightPos", lightPos);
+    shader.setVec3("lightDirection", lightDirection);
+    shader.setVec3("lightColor", lightColor);
+    shader.setVec3("viewPos", viewPos);
+    shader.setVec3("objectColor", objectColor);
+}
+
+// Function to check the distance between two positions
+bool isPositionValid(const glm::vec3& newPosition, const std::vector<glm::vec3>& existingPositions, float minDistance) {
+    for (const auto& pos : existingPositions) {
+        float distance = glm::distance(newPosition, pos);
+        if (distance < minDistance) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Function to generate pseudo-random object positions with at least 5 units of distance between them
+std::vector<glm::vec3> generateSpacedObjectPositions(int count, float range, float minDistance) {
+    std::vector<glm::vec3> positions;
+
+    // Random number generator for X and Z positions
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(-range, range);
+
+    while (positions.size() < count) {
+        // Generate a new potential position
+        glm::vec3 newPosition(dist(gen), 0.0f, dist(gen));
+
+        // Check if the new position is valid (i.e., far enough from other positions)
+        if (isPositionValid(newPosition, positions, minDistance)) {
+            positions.push_back(newPosition);
+        }
+    }
+
+    return positions;
+}
 
 // Declare the texture ID for the loading screen
 unsigned int loadingScreenTexture;
@@ -118,42 +309,26 @@ void renderQuad(float x, float y, float width, float height) {
 
 // Main function
 int main() {
-    // Change working directory to the project root only on Mac needed
-    #ifdef __APPLE__
-        chdir("..");
-    #endif
-    // Initialize GLFW
-    if (!glfwInit()) {
-        std::cout << "Failed to initialize GLFW" << std::endl;
-        return -1;
-    }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // Create a window
-    GLFWwindow* window = glfwCreateWindow(1024, 768, "Cows n Cars", NULL, NULL);
-    if (window == NULL) {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-
-    // Load OpenGL functions using GLAD
-    if (!gladLoadGL()) {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-
-    // Set viewport size
-    glViewport(0, 0, 1024, 768);
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);  // Dark grey background
-    glEnable(GL_DEPTH_TEST); // Enable depth testing
-
+    GLFWwindow* window = initializeWindow();
+    
     // Create shader programs
-    Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
+    Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
+    Shader groundShader("src/shaders/ground_vertex_shader.vert", "src/shaders/ground_fragment_shader.frag");
+    Model big_rock("src/models/big_rock.obj");
+    Model small_rock("src/models/small_rock.obj");
+    Model tree("src/models/tree.obj");
+    Model ground("src/models/ground.obj");
+    Camera camera;
+
+    int treeCount = 50;
+    std::vector<glm::vec3> treePositions = generateSpacedObjectPositions(treeCount, 90.0f, 15.0f);  // Range -90 to 90, at least 5 units apart
+
+    int bigRockCount = 35;
+    std::vector<glm::vec3> bigRockPositions = generateSpacedObjectPositions(bigRockCount, 90.0f, 15.0f);
+
+    int smallRockCount = 35;
+    std::vector<glm::vec3> smallRockPositions = generateSpacedObjectPositions(smallRockCount, 90.0f, 15.0f);
 
     std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
 
@@ -168,8 +343,7 @@ int main() {
         std::cout << "Loading screen texture loaded successfully. ID: " << loadingScreenTexture << std::endl;
     }
 
-    // Load the cow model
-    loadCowModel("src/models/cow.obj");
+    
 
     // Set light properties
     glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
@@ -205,34 +379,77 @@ int main() {
             // Render the loading screen with background image
             renderLoadingScreen(loadingScreenTexture, quadShader);
         } else if (currentState == STATE_GAME) {
-            // Hide the cursor during the game
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // Activate the shader program
             shaderProgram.use();
+            camera.computeMatricesFromInputs(window);
 
-            // Update camera and controls
-            updateModelPosition(window, deltaTime);
-            computeMatricesFromInputs(window, deltaTime);
-            setThirdPersonView(modelPosition, glm::vec3(0.0f, 0.0f, -1.0f));
-
-            // Set lighting uniforms
-            shaderProgram.setVec3("lightPos", lightPos);
-            shaderProgram.setVec3("lightDirection", lightDirection);
-            shaderProgram.setVec3("lightColor", lightColor);
-            shaderProgram.setVec3("viewPos", viewPos);
-            shaderProgram.setVec3("objectColor", objectColor);
-
-            // Set the model, view, and projection matrices
-            glm::mat4 model = glm::mat4(1.0f);
-            glm::mat4 view = getViewMatrix();
-            glm::mat4 projection = getProjectionMatrix();
-            shaderProgram.setMat4("model", model);
-            shaderProgram.setMat4("view", view);
-            shaderProgram.setMat4("projection", projection);
+            glm::mat4 view = camera.getViewMatrix();
+            glm::mat4 projection = camera.getProjectionMatrix();
+            setLightingAndObjectProperties(shaderProgram);
 
             // Draw the cow model
-            drawCow();
+            // glm::mat4 cowModel = glm::mat4(1.0f);
+            // cowModel = glm::translate(cowModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of cow
+            // shaderProgram.setMat4("model", cowModel);
+            // shaderProgram.setMat4("view", view);
+            // shaderProgram.setMat4("projection", projection);
+            // cow.draw(shaderProgram); // Draw cow
+
+            glm::mat4 groundModel = glm::mat4(1.0f);
+            groundModel = glm::translate(groundModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of cow
+            shaderProgram.setMat4("model", groundModel);
+            shaderProgram.setMat4("view", view);
+            shaderProgram.setMat4("projection", projection);
+            ground.draw(shaderProgram); // Draw ground
+
+            // Draw the tree model using fixed positions
+            for (const auto& position : treePositions) {
+                glm::mat4 treeModel = glm::mat4(1.0f);
+                treeModel = glm::translate(treeModel, position); // Use fixed position
+                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+                
+                shaderProgram.setMat4("model", treeModel);
+                shaderProgram.setMat4("view", view);
+                shaderProgram.setMat4("projection", projection);
+                tree.draw(shaderProgram); // Draw tree
+            }
+
+            // Draw the rocks
+            for (const auto& position : smallRockPositions) {
+                glm::mat4 smallRockkModel = glm::mat4(1.0f);
+                smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
+                smallRockkModel = glm::scale(smallRockkModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+                
+                shaderProgram.setMat4("model", smallRockkModel);
+                shaderProgram.setMat4("view", view);
+                shaderProgram.setMat4("projection", projection);
+                big_rock.draw(shaderProgram); // Draw tree
+            }
+
+            for (const auto& position : bigRockPositions) {
+                glm::mat4 bigRockkModel = glm::mat4(1.0f);
+                bigRockkModel = glm::translate(bigRockkModel, position); // Use fixed position
+                bigRockkModel = glm::scale(bigRockkModel, glm::vec3(1.5f, 1.5f, 1.5f)); // Scale trees if necessary
+                
+                shaderProgram.setMat4("model", bigRockkModel);
+                shaderProgram.setMat4("view", view);
+                shaderProgram.setMat4("projection", projection);
+                big_rock.draw(shaderProgram); // Draw tree
+            }
+
+            // for (const auto& position : smallRockPositions) {
+            //     glm::mat4  smallRockkModel = glm::mat4(1.0f);
+            //     smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
+            //     smallRockkModel = glm::scale(smallRockkModel, glm::vec3(10.5f, 10.5f, 10.5f)); // Scale trees if necessary
+                
+            //     shaderProgram.setMat4("model", smallRockkModel);
+            //     shaderProgram.setMat4("view", view);
+            //     shaderProgram.setMat4("projection", projection);
+            //     small_rock.draw(shaderProgram); // Draw tree
+            // }
+
         }
 
         glfwSwapBuffers(window);
