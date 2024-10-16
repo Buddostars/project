@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <unistd.h> // For changing the working directory
 #include <filesystem>
 
 #include <glm/glm.hpp>                  // For math operations (OpenGL Mathematics)
@@ -117,6 +118,10 @@ void renderQuad(float x, float y, float width, float height) {
 
 // Main function
 int main() {
+    // Change working directory to the project root only on Mac needed
+    #ifdef __APPLE__
+        chdir("..");
+    #endif
     // Initialize GLFW
     if (!glfwInit()) {
         std::cout << "Failed to initialize GLFW" << std::endl;
