@@ -1,23 +1,36 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <vector>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "shader.h"
-#include "controls.hpp"
-#include "model.hpp"
+#include <unordered_set>
 #include <filesystem>
+#include <vector>
+#include <cmath>
+#include <random>
 #include <thread>  // Include this for std::this_thread::sleep_for
 #include <chrono>  // Include this for std::chrono::milliseconds
+
+#include "shader.h"
+#include "controls.hpp"
+#include "ground.hpp"
+#include "model.hpp"
+
+
 
 std::vector<Vertex> vertices;
 std::vector<unsigned int> indices;
 unsigned int VAO, VBO, EBO;
+
+struct Vec3Hash {
+    std::size_t operator()(const glm::vec3& v) const {
+        return std::hash<float>()(v.x) ^ std::hash<float>()(v.y) ^ std::hash<float>()(v.z);
+    }
+};
 
 // Function to initialize GLFW
 GLFWwindow* initializeWindow() {
@@ -160,16 +173,40 @@ void setLightingAndObjectProperties(Shader& shader) {
     shader.setVec3("objectColor", objectColor);
 }
 
-// Function to initialize tree positions
-std::vector<glm::vec3> generateObjectPositions(int count) {
-    std::vector<glm::vec3> positions;
-    for (int i = 0; i < count; ++i) {
-        float xPos = static_cast<float>(rand() % 201 - 100); // Random x position between -100 and 100
-        float zPos = static_cast<float>(rand() % 201 - 100); // Random z position between -100 and 100
-        positions.emplace_back(xPos, 0.0f, zPos);
+// Function to check the distance between two positions
+bool isPositionValid(const glm::vec3& newPosition, const std::vector<glm::vec3>& existingPositions, float minDistance) {
+    for (const auto& pos : existingPositions) {
+        float distance = glm::distance(newPosition, pos);
+        if (distance < minDistance) {
+            return false;
+        }
     }
+    return true;
+}
+
+// Function to generate pseudo-random object positions with at least 5 units of distance between them
+std::vector<glm::vec3> generateSpacedObjectPositions(int count, float range, float minDistance) {
+    std::vector<glm::vec3> positions;
+
+    // Random number generator for X and Z positions
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist(-range, range);
+
+    while (positions.size() < count) {
+        // Generate a new potential position
+        glm::vec3 newPosition(dist(gen), 0.0f, dist(gen));
+
+        // Check if the new position is valid (i.e., far enough from other positions)
+        if (isPositionValid(newPosition, positions, minDistance)) {
+            positions.push_back(newPosition);
+        }
+    }
+
     return positions;
 }
+
+
 
 
 int main() {
@@ -179,6 +216,7 @@ int main() {
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader groundShader("src/shaders/ground_vertex_shader.vert", "src/shaders/ground_fragment_shader.frag");
     Model big_rock("src/models/big_rock.obj");
+    Model small_rock("src/models/small_rock.obj");
     Model tree("src/models/tree.obj");
     Model ground("src/models/ground.obj");
     Camera camera;
@@ -188,9 +226,16 @@ int main() {
 
     std::cout << "Loaded " << vertices.size() << " vertices and " << indices.size() << " indices." << std::endl;
 
-    // Generate fixed tree positions
-    int treeCount = 15; // Change this for more trees
-    std::vector<glm::vec3> treePositions = generateObjectPositions(treeCount);
+    int treeCount = 100;
+    std::vector<glm::vec3> treePositions = generateSpacedObjectPositions(treeCount, 90.0f, 10.0f);  // Range -90 to 90, at least 5 units apart
+
+    int bigRockCount = 50;
+    std::vector<glm::vec3> bigRockPositions = generateSpacedObjectPositions(bigRockCount, 90.0f, 10.0f);
+
+    int smallRockCount = 35;
+    std::vector<glm::vec3> smallRockPositions = generateSpacedObjectPositions(smallRockCount, 90.0f, 10.0f);
+
+
 
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0) {
         glClearColor(0.68f, 0.85f, 0.9f, 1.0f);  // Light blue color
@@ -229,6 +274,40 @@ int main() {
             shaderProgram.setMat4("projection", projection);
             tree.draw(shaderProgram); // Draw tree
         }
+
+        // Draw the rocks
+        for (const auto& position : smallRockPositions) {
+            glm::mat4 smallRockkModel = glm::mat4(1.0f);
+            smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
+            smallRockkModel = glm::scale(smallRockkModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+            
+            shaderProgram.setMat4("model", smallRockkModel);
+            shaderProgram.setMat4("view", view);
+            shaderProgram.setMat4("projection", projection);
+            big_rock.draw(shaderProgram); // Draw tree
+        }
+
+        for (const auto& position : bigRockPositions) {
+            glm::mat4 bigRockkModel = glm::mat4(1.0f);
+            bigRockkModel = glm::translate(bigRockkModel, position); // Use fixed position
+            bigRockkModel = glm::scale(bigRockkModel, glm::vec3(1.5f, 1.5f, 1.5f)); // Scale trees if necessary
+            
+            shaderProgram.setMat4("model", bigRockkModel);
+            shaderProgram.setMat4("view", view);
+            shaderProgram.setMat4("projection", projection);
+            big_rock.draw(shaderProgram); // Draw tree
+        }
+
+        // for (const auto& position : smallRockPositions) {
+        //     glm::mat4  smallRockkModel = glm::mat4(1.0f);
+        //     smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
+        //     smallRockkModel = glm::scale(smallRockkModel, glm::vec3(10.5f, 10.5f, 10.5f)); // Scale trees if necessary
+            
+        //     shaderProgram.setMat4("model", smallRockkModel);
+        //     shaderProgram.setMat4("view", view);
+        //     shaderProgram.setMat4("projection", projection);
+        //     small_rock.draw(shaderProgram); // Draw tree
+        // }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
