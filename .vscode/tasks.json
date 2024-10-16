@@ -17,6 +17,7 @@
                 "${workspaceFolder}/src/main.cpp",
                 "${workspaceFolder}/src/controls.cpp",
                 "${workspaceFolder}/src/TextRenderer.cpp",
+                "${workspaceFolder}/src/cow.cpp",
                 "${workspaceFolder}/src/glad.c",
                 "-o",
                 "${workspaceFolder}/app",
