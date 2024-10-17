@@ -20,6 +20,7 @@
 #include "texture_loader.h" // For loading the background image as texture
 #include "model.hpp"
 #include "globals.hpp"
+#include "car.hpp"
 
 // Define the GameState enum before using it
 enum GameState {
@@ -220,10 +221,17 @@ int main() {
     Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader groundShader("src/shaders/ground_vertex_shader.vert", "src/shaders/ground_fragment_shader.frag");
+
+    // Load models
     Model big_rock("src/models/big_rock.obj");
     Model small_rock("src/models/small_rock.obj");
     Model tree("src/models/tree.obj");
     Model ground("src/models/ground.obj");
+    Model carModel("src/models/car.obj");
+
+    Car car(carModel);
+
+    // Create camera object
     Camera camera;
 
     int treeCount = 50;
@@ -260,6 +268,9 @@ int main() {
     // Initialize model position
     glm::vec3 modelPosition(0.0f, 0.0f, 0.0f);
 
+    
+
+
     // Initialize time variables
     float lastTime = glfwGetTime();
 
@@ -270,6 +281,8 @@ int main() {
         float currentTime = glfwGetTime();
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
+
+        
 
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -284,24 +297,24 @@ int main() {
             // Render the loading screen with background image
             renderLoadingScreen(loadingScreenTexture, quadShader);
         } else if (currentState == STATE_GAME) {
+
+            car.update(deltaTime, window);
+
+            camera.computeMatricesFromInputs(window, car.getPosition(), car.getForwardDirection());
             
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             shaderProgram.use();
-            camera.computeMatricesFromInputs(window);
+            
 
             glm::mat4 view = camera.getViewMatrix();
             glm::mat4 projection = camera.getProjectionMatrix();
             setLightingAndObjectProperties(shaderProgram);
 
-            // Draw the cow model
-            // glm::mat4 cowModel = glm::mat4(1.0f);
-            // cowModel = glm::translate(cowModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of cow
-            // shaderProgram.setMat4("model", cowModel);
-            // shaderProgram.setMat4("view", view);
-            // shaderProgram.setMat4("projection", projection);
-            // cow.draw(shaderProgram); // Draw cow
+            // Draw the car model   
+            car.draw(shaderProgram);
 
+            // Draw the ground model
             glm::mat4 groundModel = glm::mat4(1.0f);
             groundModel = glm::translate(groundModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of cow
             shaderProgram.setMat4("model", groundModel);
@@ -344,16 +357,7 @@ int main() {
                 big_rock.draw(shaderProgram); // Draw tree
             }
 
-            // for (const auto& position : smallRockPositions) {
-            //     glm::mat4  smallRockkModel = glm::mat4(1.0f);
-            //     smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
-            //     smallRockkModel = glm::scale(smallRockkModel, glm::vec3(10.5f, 10.5f, 10.5f)); // Scale trees if necessary
-                
-            //     shaderProgram.setMat4("model", smallRockkModel);
-            //     shaderProgram.setMat4("view", view);
-            //     shaderProgram.setMat4("projection", projection);
-            //     small_rock.draw(shaderProgram); // Draw tree
-            // }
+            
 
         }
 
