@@ -4,7 +4,7 @@
 
 
 Car::Car(Model& carModel) 
-    :model(carModel), position(0.0f, 0.0f, 0.0f), speed(5.0f), steeringAngle(0.0f), turningSpeed(90.0f) {}
+    :model(carModel), position(0.0f, 0.0f, 0.0f), speed(15.0f), steeringAngle(0.0f), turningSpeed(90.0f) {}
 
 void Car::update(float deltaTime, GLFWwindow* window) {
     bool isTurning = false; // Check if the car is turning
