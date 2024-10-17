@@ -12,10 +12,6 @@ class Camera {
 public:
     // Camera attributes
     vec3 position;
-    float horizontalAngle;
-    float verticalAngle;
-    float speed;
-    float mouseSpeed;
     float initialFoV;
     mat4 ViewMatrix;
     mat4 ProjectionMatrix;
@@ -24,7 +20,7 @@ public:
     Camera();
 
     // Method to compute matrices based on inputs
-    void computeMatricesFromInputs(GLFWwindow* window);
+    void computeMatricesFromInputs(GLFWwindow* window, const vec3& carPosition, const vec3& carForward);
 
     // Getter methods for matrices
     mat4 getViewMatrix() const;
