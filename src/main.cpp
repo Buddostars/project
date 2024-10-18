@@ -231,7 +231,6 @@ int main() {
     Model small_rock("src/models/small_rock.obj");
     Model tree("src/models/tree.obj");
     Model ground("src/models/ground.obj");
-    Model cow("src/models/cow.obj");
     Model carModel("src/models/car.obj");
     Model cowModel("src/models/new_cow.obj");
 
