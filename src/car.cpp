@@ -8,18 +8,8 @@ Car::Car(Model& carModel)
 
 void Car::update(float deltaTime, GLFWwindow* window) {
     bool isTurning = false; // Check if the car is turning
-
-    // Handle car turning
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        steeringAngle += turningSpeed * deltaTime; // Move left
-        isTurning = true;
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        steeringAngle -= turningSpeed * deltaTime; // Move right
-        isTurning = true;
-    }
-
+    bool forward;
+    bool reverse;
 
     // Extract the car's forward direction from the transformation matrix
     glm::vec3 forwardDirection = getForwardDirection();
@@ -28,13 +18,36 @@ void Car::update(float deltaTime, GLFWwindow* window) {
     // Update car position based on direction and speed
     // Move forward
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        forward = true;
         position -= forwardDirection * speed * deltaTime; 
-        
     }
+    else forward = false;
     // Move backward
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        reverse = true;
         position += forwardDirection * speed * deltaTime; 
-       
+    }
+    else reverse = false;
+
+    // Handle car turning
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && (forward || reverse)) {
+        if (forward) {
+            steeringAngle += turningSpeed * deltaTime; // Move left
+        }
+        else if (reverse) {
+            steeringAngle -= turningSpeed * deltaTime; // Move right
+        }
+        isTurning = true;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && (forward || reverse)) {
+        if (forward) {
+            steeringAngle -= turningSpeed * deltaTime; // Move right
+        }
+        else if (reverse) {
+            steeringAngle += turningSpeed * deltaTime; // Move left
+        }
+        isTurning = true;
     }
 }
 
