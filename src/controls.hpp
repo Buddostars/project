@@ -1,19 +1,30 @@
 #ifndef CONTROLS_HPP
 #define CONTROLS_HPP
 
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <algorithm> // For std::clamp
 
+using namespace glm;
 
-glm::mat4 getViewMatrix();
-glm::mat4 getProjectionMatrix();
+class Camera {
+public:
+    // Camera attributes
+    vec3 position;
+    float initialFoV;
+    mat4 ViewMatrix;
+    mat4 ProjectionMatrix;
 
-void computeMatricesFromInputs(GLFWwindow* window, float deltaTime);
+    // Constructor
+    Camera();
 
-//third person view
-void setThirdPersonView(const glm::vec3& position, const glm::vec3& direction);
+    // Method to compute matrices based on inputs
+    void computeMatricesFromInputs(GLFWwindow* window, const vec3& carPosition, const vec3& carForward);
 
-void updateModelPosition(GLFWwindow* window, float deltaTime);
+    // Getter methods for matrices
+    mat4 getViewMatrix() const;
+    mat4 getProjectionMatrix() const;
+};
 
-#endif
+#endif // CONTROLS_HPP
