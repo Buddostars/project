@@ -1,6 +1,6 @@
 # Blender 4.2.0
 # www.blender.org
-mtllib Tree.mtl
+mtllib tree.mtl
 o Branch
 v -0.895574 -0.324275 0.388384
 v -0.287184 -0.324275 -0.932963
