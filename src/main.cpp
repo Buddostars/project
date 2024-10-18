@@ -328,16 +328,16 @@ int main() {
             ground.draw(objectShader); // Draw ground
 
             // Draw the tree model using fixed positions
-            for (const auto& position : treePositions) {
-                glm::mat4 treeModel = glm::mat4(1.0f);
-                treeModel = glm::translate(treeModel, position); // Use fixed position
-                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+            // for (const auto& position : treePositions) {
+            //     glm::mat4 treeModel = glm::mat4(1.0f);
+            //     treeModel = glm::translate(treeModel, position); // Use fixed position
+            //     treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
                 
-                shaderProgram.setMat4("model", treeModel);
-                shaderProgram.setMat4("view", view);
-                shaderProgram.setMat4("projection", projection);
-                tree.draw(shaderProgram); // Draw tree
-            }
+            //     shaderProgram.setMat4("model", treeModel);
+            //     shaderProgram.setMat4("view", view);
+            //     shaderProgram.setMat4("projection", projection);
+            //     tree.draw(shaderProgram); // Draw tree
+            // }
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
