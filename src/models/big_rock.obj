@@ -1,6 +1,6 @@
 # Blender 4.2.0
 # www.blender.org
-mtllib Big_Rocks.mtl
+mtllib big_rock.mtl
 o Icosphere
 v 1.551898 -0.959138 1.127507
 v -0.592761 -0.959138 1.824360
