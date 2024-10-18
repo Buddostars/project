@@ -21,6 +21,7 @@
 #include "model.hpp"
 #include "globals.hpp"
 #include "car.hpp"
+#include "Cow_Character.h"
 
 // Define the GameState enum before using it
 enum GameState {
@@ -228,8 +229,10 @@ int main() {
     Model tree("src/models/tree.obj");
     Model ground("src/models/ground.obj");
     Model carModel("src/models/car.obj");
+    Model cowModel("src/models/cow.obj");
 
     Car car(carModel);
+    Cow_Character cow(cowModel);
 
     // Create camera object
     Camera camera;
@@ -357,7 +360,20 @@ int main() {
                 big_rock.draw(shaderProgram); // Draw tree
             }
 
-            
+            // Update the cow's position
+            cow.moveRandomly(deltaTime);  // Update position and movement logic
+            glm::mat4 cowModelMatrix = glm::mat4(1.0f);
+            cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
+            cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.totalRotationAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+            cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
+
+            // Pass the updated matrices to the shader
+            shaderProgram.setMat4("model", cowModelMatrix);
+            shaderProgram.setMat4("view", view);
+            shaderProgram.setMat4("projection", projection);
+
+            // Render the cow
+            cow.draw(shaderProgram);
 
         }
 
