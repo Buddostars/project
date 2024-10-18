@@ -23,7 +23,6 @@
 #include "model.hpp"
 #include "globals.hpp"
 #include "car.hpp"
-#include "Cow_Character.h"
 
 // Define the GameState enum before using it
 enum GameState {
@@ -232,10 +231,8 @@ int main() {
     Model tree("src/models/tree.obj");
     Model ground("src/models/ground.obj");
     Model carModel("src/models/car.obj");
-    Model cowModel("src/models/new_cow.obj");
 
     Car car(carModel);
-    Cow_Character cow(cowModel);
 
     // Create camera object
     Camera camera;
@@ -364,29 +361,6 @@ int main() {
                 objectShader.setMat4("projection", projection);
                 big_rock.draw(objectShader); // Draw big rocks
             }
-
-           // Update the cow's position
-            cow.moveRandomly(deltaTime);  // Update position and movement logic
-
-            // Draw the cow model using the updated position and rotation
-            glm::mat4 cowModelMatrix = glm::mat4(1.0f);
-
-            // Apply translation for the cow's position
-            cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
-
-            // Apply rotation for the cow's direction (use totalRotationAngle for smooth rotation)
-            cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
-
-            // Scale the cow to 0.1x size
-            cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
-
-            // Pass the updated matrices to the shader
-            shaderProgram.setMat4("model", cowModelMatrix);
-            shaderProgram.setMat4("view", view);
-            shaderProgram.setMat4("projection", projection);
-
-            // Render the cow
-            cow.draw(shaderProgram);
         }
 
         glfwSwapBuffers(window);
