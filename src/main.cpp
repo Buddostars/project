@@ -329,16 +329,7 @@ int main() {
             objectShader.setMat4("view", view);
             objectShader.setMat4("projection", projection);
             ground.draw(objectShader); // Draw ground
-
-            // Draw the cow model
-            // glm::mat4 cowModel = glm::mat4(1.0f);
-            // cowModel = glm::translate(cowModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of ground
-            // objectShader.setMat4("model", cowModel);
-            // objectShader.setMat4("view", view);
-            // objectShader.setMat4("projection", projection);
-            // ground.draw(objectShader); // Draw cow
-
-
+            
             //Draw the tree model using fixed positions
             // for (const auto& position : treePositions) {
             //     glm::mat4 treeModel = glm::mat4(1.0f);
@@ -390,12 +381,12 @@ int main() {
             cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
 
             // Pass the updated matrices to the shader
-            shaderProgram.setMat4("model", cowModelMatrix);
-            shaderProgram.setMat4("view", view);
-            shaderProgram.setMat4("projection", projection);
+            objectShader.setMat4("model", cowModelMatrix);
+            objectShader.setMat4("view", view);
+            objectShader.setMat4("projection", projection);
 
             // Render the cow
-            cow.draw(shaderProgram);
+            cow.draw(objectShader);
         }
 
         glfwSwapBuffers(window);
