@@ -11,13 +11,50 @@ Cow_Character::Cow_Character(Model& model)
 
 
 void Cow_Character::moveRandomly(float deltaTime) {
-    float maxDistance = 10.0f;  // Move forward for 100 meters
-    float accelerationmultiplier = 1.5;
+    float maxDistance = 5.0f;  // Move forward for 10 meters
+    float accelerationMultiplier = 1.5f;
+    rotationSpeed = 50.0f;
 
+    if (isRotating) {
+        moving = true;
+
+        // Smoothly rotate towards the target angle
+        float rotationStep = rotationSpeed * deltaTime;
+
+        // Check if the cow needs to keep rotating or stop
+        if (fabs(targetRotationAngle) > rotationStep) {
+            // Continue rotating towards the target
+            totalRotationAngle += (targetRotationAngle > 0 ? rotationStep : -rotationStep);
+            targetRotationAngle -= (targetRotationAngle > 0 ? rotationStep : -rotationStep);
+
+            // // Accelerate the cow towards max speed
+            // if (velocity < maxSpeed) {
+            //     velocity += acceleration * deltaTime * accelerationMultiplier;
+            //     if (velocity > maxSpeed) velocity = maxSpeed;  // Cap the velocity at max speed
+            // }
+
+            // // Move forward in the current direction based on the current velocity
+            // position += direction * velocity * deltaTime;
+        } else {
+            // Finish the rotation, update the direction vector
+            totalRotationAngle += targetRotationAngle;  // Apply the remaining rotation
+            targetRotationAngle = 0.0f;
+            isRotating = false;  // Rotation is done
+            moving = true;  // Resume moving
+
+            // Update the direction based on the new rotation angle
+            float radians = glm::radians(totalRotationAngle);
+            glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), radians, glm::vec3(0.0f, 1.0f, 0.0f));
+            direction = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)));  // Update the forward direction
+        }
+        std::cout << "Rotating by: " << rotationStep << " degrees, Remaining: " << targetRotationAngle << std::endl;
+
+
+    }
     if (moving) {
         // Accelerate the cow towards max speed
         if (velocity < maxSpeed) {
-            velocity += acceleration * deltaTime * accelerationmultiplier;
+            velocity += acceleration * deltaTime * accelerationMultiplier;
             if (velocity > maxSpeed) velocity = maxSpeed;  // Cap the velocity at max speed
         }
 
@@ -49,35 +86,30 @@ void Cow_Character::moveRandomly(float deltaTime) {
     }
 }
 
+
+
 void Cow_Character::stopAndRotate() {
-    // Randomly rotate clockwise or counterclockwise by a random angle (e.g., 45 degrees or -45 degrees)
-    float rotationAngle = ((rand() % 2) == 0) ? 45.0f : -45.0f;  // Rotate randomly either way
+    // Randomly select the rotation angle (clockwise or counterclockwise)
+    float randomRotationAngle = ((rand() % 2) == 0) ? 45.0f : -45.0f;  // Rotate randomly by 45 degrees
 
+    // Set the target rotation angle
+    targetRotationAngle = randomRotationAngle;
+
+    // Set the rotation flag to start rotating
+    isRotating = true;
+
+    // The cow will stop moving and rotate over time
     std::cout << "Old direction: " << direction.x << ", " << direction.y << ", " << direction.z << std::endl;
-    std::cout << "Rotation angle: " << rotationAngle << std::endl;
-
-    // Convert the angle to radians
-    float radians = glm::radians(rotationAngle);
-
-    // Rotate the current direction vector using a rotation matrix around the Y-axis (which represents up)
-    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), radians, glm::vec3(0.0f, 1.0f, 0.0f));
-
-    // Apply the rotation to the direction vector
-    direction = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(direction, 0.0f)));
-
-    // Accumulate the rotation angle
-    totalRotationAngle += rotationAngle;
-
-    std::cout << "New direction: " << direction.x << ", " << direction.y << ", " << direction.z << std::endl;
-
-    // After rotating, the cow starts moving again
-    moving = true;
+    std::cout << "Target rotation angle: " << randomRotationAngle << std::endl;
 }
-
 
 
 glm::vec3 Cow_Character::getPosition() {
     return position;
+}
+
+float Cow_Character::getTotalRotationAngle() {
+    return totalRotationAngle;
 }
 
 void Cow_Character::draw(Shader& shader) {

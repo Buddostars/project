@@ -7,10 +7,10 @@
 class Cow_Character {
 public:
     Cow_Character(Model& model);
-    float totalRotationAngle;  // The total rotation angle applied to the cow
 
     void moveRandomly(float deltaTime);  // Updates the cow's position randomly based on deltaTime
     glm::vec3 getPosition();  // Returns the cow's current position
+    float getTotalRotationAngle();
     void draw(Shader& shader);  // Renders the cow model
 
 private:
@@ -18,7 +18,11 @@ private:
     glm::vec3 direction;      // The direction the cow is facing
     float distanceTraveled;   // The distance the cow has traveled since the last stop
     bool moving;              // Indicates if the cow is currently moving
+    bool isRotating;           // Indicates if the cow is currently rotating
     float rotationAngle;      // The angle by which the cow rotates after stopping
+    float targetRotationAngle; // The target rotation angle
+    float rotationSpeed;       // The speed of rotation (degrees per second)
+    float totalRotationAngle;  // The total rotation angle applied to the cow
 
     // Velocity and movement parameters
     float velocity;           // The cow's current velocity

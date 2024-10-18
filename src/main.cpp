@@ -229,7 +229,7 @@ int main() {
     Model tree("src/models/tree.obj");
     Model ground("src/models/ground.obj");
     Model carModel("src/models/car.obj");
-    Model cowModel("src/models/cow.obj");
+    Model cowModel("src/models/new_cow.obj");
 
     Car car(carModel);
     Cow_Character cow(cowModel);
@@ -360,11 +360,19 @@ int main() {
                 big_rock.draw(shaderProgram); // Draw tree
             }
 
-            // Update the cow's position
+           // Update the cow's position
             cow.moveRandomly(deltaTime);  // Update position and movement logic
+
+            // Draw the cow model using the updated position and rotation
             glm::mat4 cowModelMatrix = glm::mat4(1.0f);
+
+            // Apply translation for the cow's position
             cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
-            cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.totalRotationAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+            // Apply rotation for the cow's direction (use totalRotationAngle for smooth rotation)
+            cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
+
+            // Scale the cow to 0.1x size
             cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
 
             // Pass the updated matrices to the shader
@@ -374,6 +382,7 @@ int main() {
 
             // Render the cow
             cow.draw(shaderProgram);
+
 
         }
 
