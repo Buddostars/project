@@ -14,6 +14,8 @@
 #include <thread>  // Include this for std::this_thread::sleep_for
 #include <chrono>  // Include this for std::chrono::milliseconds
 #include <unordered_set>
+#include <iostream>
+#include <stb_image.h>
 
 #include "shader.h"
 #include "controls.hpp"
@@ -217,11 +219,12 @@ void renderQuad(float x, float y, float width, float height) {
 // Main function
 int main() {
     GLFWwindow* window = initializeWindow();
-    
+    // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
+    stbi_set_flip_vertically_on_load(true);
     // Create shader programs
     Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
-    Shader groundShader("src/shaders/ground_vertex_shader.vert", "src/shaders/ground_fragment_shader.frag");
+    Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
 
     // Load models
     Model big_rock("src/models/big_rock.obj");
@@ -240,10 +243,10 @@ int main() {
     int treeCount = 50;
     std::vector<glm::vec3> treePositions = generateSpacedObjectPositions(treeCount, 90.0f, 15.0f);  // Range -90 to 90, at least 5 units apart
 
-    int bigRockCount = 35;
+    int bigRockCount = 80;
     std::vector<glm::vec3> bigRockPositions = generateSpacedObjectPositions(bigRockCount, 90.0f, 15.0f);
 
-    int smallRockCount = 35;
+    int smallRockCount = 50;
     std::vector<glm::vec3> smallRockPositions = generateSpacedObjectPositions(smallRockCount, 90.0f, 15.0f);
 
     std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
@@ -261,12 +264,12 @@ int main() {
 
     
 
-    // Set light properties
-    glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
-    glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
-    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
-    glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
-    glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
+    // // Set light properties
+    // glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
+    // glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
+    // glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
+    // glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
+    // glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
 
     // Initialize model position
     glm::vec3 modelPosition(0.0f, 0.0f, 0.0f);
@@ -308,22 +311,24 @@ int main() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             shaderProgram.use();
-            
+            objectShader.use();
+            //shaderProgram.setSampler("texture_diffuse", 0);
 
             glm::mat4 view = camera.getViewMatrix();
             glm::mat4 projection = camera.getProjectionMatrix();
             setLightingAndObjectProperties(shaderProgram);
+            setLightingAndObjectProperties(objectShader);
 
             // Draw the car model   
             car.draw(shaderProgram);
 
             // Draw the ground model
             glm::mat4 groundModel = glm::mat4(1.0f);
-            groundModel = glm::translate(groundModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of cow
-            shaderProgram.setMat4("model", groundModel);
-            shaderProgram.setMat4("view", view);
-            shaderProgram.setMat4("projection", projection);
-            ground.draw(shaderProgram); // Draw ground
+            groundModel = glm::translate(groundModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of ground
+            objectShader.setMat4("model", groundModel);
+            objectShader.setMat4("view", view);
+            objectShader.setMat4("projection", projection);
+            ground.draw(objectShader); // Draw ground
 
             // Draw the tree model using fixed positions
             for (const auto& position : treePositions) {
@@ -341,12 +346,12 @@ int main() {
             for (const auto& position : smallRockPositions) {
                 glm::mat4 smallRockkModel = glm::mat4(1.0f);
                 smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
-                smallRockkModel = glm::scale(smallRockkModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+                smallRockkModel = glm::scale(smallRockkModel, glm::vec3(3.5f, 3.5f, 3.5f)); // Scale trees if necessary
                 
-                shaderProgram.setMat4("model", smallRockkModel);
-                shaderProgram.setMat4("view", view);
-                shaderProgram.setMat4("projection", projection);
-                big_rock.draw(shaderProgram); // Draw tree
+                objectShader.setMat4("model", smallRockkModel);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+                small_rock.draw(objectShader); // Draw small rocks
             }
 
             for (const auto& position : bigRockPositions) {
@@ -354,10 +359,10 @@ int main() {
                 bigRockkModel = glm::translate(bigRockkModel, position); // Use fixed position
                 bigRockkModel = glm::scale(bigRockkModel, glm::vec3(1.5f, 1.5f, 1.5f)); // Scale trees if necessary
                 
-                shaderProgram.setMat4("model", bigRockkModel);
-                shaderProgram.setMat4("view", view);
-                shaderProgram.setMat4("projection", projection);
-                big_rock.draw(shaderProgram); // Draw tree
+                objectShader.setMat4("model", bigRockkModel);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+                big_rock.draw(objectShader); // Draw big rocks
             }
 
            // Update the cow's position
@@ -382,8 +387,6 @@ int main() {
 
             // Render the cow
             cow.draw(shaderProgram);
-
-
         }
 
         glfwSwapBuffers(window);

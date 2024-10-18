@@ -1,6 +1,6 @@
 # Blender 4.2.0
 # www.blender.org
-mtllib Small_Rock.mtl
+mtllib small_rock.mtl
 o Icosphere
 v -0.051132 0.042969 0.358205
 v 0.050536 0.138176 0.449800
