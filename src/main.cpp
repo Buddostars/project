@@ -327,23 +327,23 @@ int main() {
             objectShader.setMat4("projection", projection);
             ground.draw(objectShader); // Draw ground
 
-            // // Draw the tree model using fixed positions
-            // for (const auto& position : treePositions) {
-            //     glm::mat4 treeModel = glm::mat4(1.0f);
-            //     treeModel = glm::translate(treeModel, position); // Use fixed position
-            //     treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+            // Draw the tree model using fixed positions
+            for (const auto& position : treePositions) {
+                glm::mat4 treeModel = glm::mat4(1.0f);
+                treeModel = glm::translate(treeModel, position); // Use fixed position
+                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
                 
-            //     shaderProgram.setMat4("model", treeModel);
-            //     shaderProgram.setMat4("view", view);
-            //     shaderProgram.setMat4("projection", projection);
-            //     tree.draw(shaderProgram); // Draw tree
-            // }
+                shaderProgram.setMat4("model", treeModel);
+                shaderProgram.setMat4("view", view);
+                shaderProgram.setMat4("projection", projection);
+                tree.draw(shaderProgram); // Draw tree
+            }
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
                 glm::mat4 smallRockkModel = glm::mat4(1.0f);
                 smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
-                smallRockkModel = glm::scale(smallRockkModel, glm::vec3(4.5f, 4.5f, 4.5f)); // Scale trees if necessary
+                smallRockkModel = glm::scale(smallRockkModel, glm::vec3(3.5f, 3.5f, 3.5f)); // Scale trees if necessary
                 
                 objectShader.setMat4("model", smallRockkModel);
                 objectShader.setMat4("view", view);
