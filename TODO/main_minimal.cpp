@@ -1,7 +1,5 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include "Plane.h"
-#include "Cow_Character.h"
 
 int main() {
     if (!glfwInit()) {
