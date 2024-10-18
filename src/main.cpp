@@ -230,6 +230,7 @@ int main() {
     Model small_rock("src/models/small_rock.obj");
     Model tree("src/models/tree.obj");
     Model ground("src/models/ground.obj");
+    Model cow("src/models/cow.obj");
     Model carModel("src/models/car.obj");
 
     Car car(carModel);
@@ -317,7 +318,7 @@ int main() {
             setLightingAndObjectProperties(objectShader);
 
             // Draw the car model   
-            car.draw(shaderProgram);
+            car.draw(objectShader);
 
             // Draw the ground model
             glm::mat4 groundModel = glm::mat4(1.0f);
@@ -327,16 +328,25 @@ int main() {
             objectShader.setMat4("projection", projection);
             ground.draw(objectShader); // Draw ground
 
-            // Draw the tree model using fixed positions
+            // Draw the cow model
+            // glm::mat4 cowModel = glm::mat4(1.0f);
+            // cowModel = glm::translate(cowModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of ground
+            // objectShader.setMat4("model", cowModel);
+            // objectShader.setMat4("view", view);
+            // objectShader.setMat4("projection", projection);
+            // ground.draw(objectShader); // Draw cow
+
+
+            //Draw the tree model using fixed positions
             // for (const auto& position : treePositions) {
             //     glm::mat4 treeModel = glm::mat4(1.0f);
             //     treeModel = glm::translate(treeModel, position); // Use fixed position
             //     treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
                 
-            //     shaderProgram.setMat4("model", treeModel);
-            //     shaderProgram.setMat4("view", view);
-            //     shaderProgram.setMat4("projection", projection);
-            //     tree.draw(shaderProgram); // Draw tree
+            //     objectShader.setMat4("model", treeModel);
+            //     objectShader.setMat4("view", view);
+            //     objectShader.setMat4("projection", projection);
+            //     tree.draw(objectShader); // Draw tree
             // }
 
             // Draw the rocks
