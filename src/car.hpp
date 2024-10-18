@@ -26,6 +26,7 @@ private:
     Model model; // Car model
     glm::vec3 position;
     float speed;
+    float maxSpeed;
     float steeringAngle;
     float turningSpeed;
 };
