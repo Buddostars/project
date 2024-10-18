@@ -237,10 +237,10 @@ int main() {
     int treeCount = 50;
     std::vector<glm::vec3> treePositions = generateSpacedObjectPositions(treeCount, 90.0f, 15.0f);  // Range -90 to 90, at least 5 units apart
 
-    int bigRockCount = 35;
+    int bigRockCount = 80;
     std::vector<glm::vec3> bigRockPositions = generateSpacedObjectPositions(bigRockCount, 90.0f, 15.0f);
 
-    int smallRockCount = 35;
+    int smallRockCount = 50;
     std::vector<glm::vec3> smallRockPositions = generateSpacedObjectPositions(smallRockCount, 90.0f, 15.0f);
 
     std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
@@ -338,12 +338,12 @@ int main() {
             for (const auto& position : smallRockPositions) {
                 glm::mat4 smallRockkModel = glm::mat4(1.0f);
                 smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
-                smallRockkModel = glm::scale(smallRockkModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+                smallRockkModel = glm::scale(smallRockkModel, glm::vec3(4.5f, 4.5f, 4.5f)); // Scale trees if necessary
                 
                 shaderProgram.setMat4("model", smallRockkModel);
                 shaderProgram.setMat4("view", view);
                 shaderProgram.setMat4("projection", projection);
-                big_rock.draw(shaderProgram); // Draw tree
+                small_rock.draw(shaderProgram); // Draw small rocks
             }
 
             for (const auto& position : bigRockPositions) {
@@ -354,11 +354,8 @@ int main() {
                 shaderProgram.setMat4("model", bigRockkModel);
                 shaderProgram.setMat4("view", view);
                 shaderProgram.setMat4("projection", projection);
-                big_rock.draw(shaderProgram); // Draw tree
+                big_rock.draw(shaderProgram); // Draw big rocks
             }
-
-            
-
         }
 
         glfwSwapBuffers(window);
