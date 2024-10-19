@@ -6,7 +6,7 @@
 Car::Car(Model& carModel) 
     :model(carModel), position(0.0f, 0.0f, 0.0f), speed(0.0f), maxSpeed(100.0f), steeringAngle(0.0f), turningSpeed(90.0f) {}
 
-void Car::update(float deltaTime, GLFWwindow* window) {
+void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem) {
     static float deceleration = 15.0f;   // Deceleration rate when W key is released
     static float brakeMultiplier = 40.0f; // Braking deceleration when S key is pressed
     float tau = 5.0f;                    // Time constant for acceleration (adjust this for acceleration speed)
@@ -89,6 +89,9 @@ void Car::update(float deltaTime, GLFWwindow* window) {
         }
         isTurning = true;
     }
+
+    // Update the particle system (smoke emission)
+    exhaustSystem.update(deltaTime, position);  // The exhaust position is relative to the car's position
 }
 
 

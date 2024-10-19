@@ -7,6 +7,7 @@
 
 #include "model.hpp"
 #include "shader.h"
+#include "ExhaustSystem.h"
 
 class Car {
 public:
@@ -14,7 +15,7 @@ public:
     Car(Model& model);
 
     // Functions
-    void update(float deltaTime, GLFWwindow* window);
+    void update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem);
     void draw(Shader& shader);
 
 

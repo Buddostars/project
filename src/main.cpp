@@ -24,6 +24,7 @@
 #include "globals.hpp"
 #include "car.hpp"
 #include "Cow_Character.h"
+#include "ExhaustSystem.h"
 
 // Define the GameState enum before using it
 enum GameState {
@@ -225,6 +226,7 @@ int main() {
     Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
+    Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
 
     // Load models
     Model big_rock("src/models/big_rock.obj");
@@ -235,6 +237,11 @@ int main() {
     Model cowModel("src/models/new_cow.obj");
 
     Car car(carModel);
+
+    // Particle system for smoke (position the exhaust pipe relatively to the car)
+    glm::vec3 exhaustOffset = glm::vec3(-1.0f, 0.5f, -2.0f);  // Example exhaust position on the left side of the car
+    ExhaustSystem exhaustSystem(100, exhaustOffset);  // Max 100 particles
+
     Cow_Character cow(cowModel);
 
     // Create camera object
@@ -304,7 +311,7 @@ int main() {
             renderLoadingScreen(loadingScreenTexture, quadShader);
         } else if (currentState == STATE_GAME) {
 
-            car.update(deltaTime, window);
+            car.update(deltaTime, window, exhaustSystem);
 
             camera.computeMatricesFromInputs(window, car.getPosition(), car.getForwardDirection());
             
@@ -387,6 +394,9 @@ int main() {
 
             // Render the cow
             cow.draw(objectShader);
+
+            // Render smoke particles
+            exhaustSystem.render(smokeShader, view, projection);
         }
 
         glfwSwapBuffers(window);
