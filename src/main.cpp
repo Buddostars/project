@@ -314,7 +314,7 @@ int main() {
             renderLoadingScreen(loadingScreenTexture, quadShader);
         } else if (currentState == STATE_GAME) {
 
-            car.update(deltaTime, window, exhaustSystem);
+            car.update(deltaTime, window, exhaustSystem, environmentHitboxes);
 
             camera.computeMatricesFromInputs(window, car.getPosition(), car.getForwardDirection());
             
