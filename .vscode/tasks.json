@@ -21,6 +21,7 @@
                 "${workspaceFolder}/src/car.cpp",
                 "${workspaceFolder}/src/mesh.cpp",
                 "${workspaceFolder}/src/model.cpp",
+                "${workspaceFolder}/src/ExhaustSystem.cpp",
                 "${workspaceFolder}/src/texture_loader.cpp",
                 "${workspaceFolder}/src/glad.c",
                 "-o",
