@@ -173,7 +173,7 @@ void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader) {
 }
 
 
-// Function: renderQuad
+// Function: renderQuada
 void renderQuad(float x, float y, float width, float height) {
     float vertices[] = {
         // Positions          // Texture Coords
@@ -227,7 +227,6 @@ int main() {
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
-
     // Load models
     Model big_rock("src/models/big_rock.obj");
     Model small_rock("src/models/small_rock.obj");
@@ -250,7 +249,7 @@ int main() {
     int treeCount = 50;
     std::vector<glm::vec3> treePositions = generateSpacedObjectPositions(treeCount, 90.0f, 15.0f);  // Range -90 to 90, at least 5 units apart
 
-    int bigRockCount = 80;
+    int bigRockCount = 20;
     std::vector<glm::vec3> bigRockPositions = generateSpacedObjectPositions(bigRockCount, 90.0f, 15.0f);
 
     int smallRockCount = 50;
@@ -269,20 +268,8 @@ int main() {
         std::cout << "Loading screen texture loaded successfully. ID: " << loadingScreenTexture << std::endl;
     }
 
-    
-
-    // // Set light properties
-    // glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
-    // glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
-    // glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
-    // glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
-    // glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
-
     // Initialize model position
     glm::vec3 modelPosition(0.0f, 0.0f, 0.0f);
-
-    
-
 
     // Initialize time variables
     float lastTime = glfwGetTime();
@@ -319,7 +306,6 @@ int main() {
 
             shaderProgram.use();
             objectShader.use();
-            //shaderProgram.setSampler("texture_diffuse", 0);
 
             glm::mat4 view = camera.getViewMatrix();
             glm::mat4 projection = camera.getProjectionMatrix();
@@ -332,22 +318,24 @@ int main() {
             // Draw the ground model
             glm::mat4 groundModel = glm::mat4(1.0f);
             groundModel = glm::translate(groundModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of ground
+            
             objectShader.setMat4("model", groundModel);
             objectShader.setMat4("view", view);
             objectShader.setMat4("projection", projection);
             ground.draw(objectShader); // Draw ground
             
             //Draw the tree model using fixed positions
-            // for (const auto& position : treePositions) {
-            //     glm::mat4 treeModel = glm::mat4(1.0f);
-            //     treeModel = glm::translate(treeModel, position); // Use fixed position
-            //     treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+            for (const auto& position : treePositions) {
+                glm::mat4 treeModel = glm::mat4(1.0f);
+                treeModel = glm::translate(treeModel, position); // Use fixed position
+                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
                 
-            //     objectShader.setMat4("model", treeModel);
-            //     objectShader.setMat4("view", view);
-            //     objectShader.setMat4("projection", projection);
-            //     tree.draw(objectShader); // Draw tree
-            // }
+                objectShader.setMat4("model", treeModel);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+
+                tree.draw(objectShader); // Draw tree
+            }
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
@@ -398,8 +386,8 @@ int main() {
             // Render smoke particles
             exhaustSystem.render(smokeShader, view, projection);
         }
-
         glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 
     // Cleanup
