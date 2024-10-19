@@ -7,6 +7,7 @@
 
 #include "model.hpp"
 #include "shader.h"
+#include "ExhaustSystem.h"
 
 class Car {
 public:
@@ -14,7 +15,7 @@ public:
     Car(Model& model);
 
     // Functions
-    void update(float deltaTime, GLFWwindow* window);
+    void update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem);
     void draw(Shader& shader);
 
 
@@ -26,6 +27,7 @@ private:
     Model model; // Car model
     glm::vec3 position;
     float speed;
+    float maxSpeed;
     float steeringAngle;
     float turningSpeed;
 };
