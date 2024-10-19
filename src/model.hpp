@@ -17,11 +17,14 @@
 #include <iostream>
 #include <vector>
 #include <map>
+
+
 #include "shader.h"
 #include "globals.hpp"
 #include "mesh.hpp"
 #include "texture.hpp"
 #include "vertex.hpp"
+#include "hitbox.hpp"
 
 class Model {
 public:
@@ -33,6 +36,10 @@ public:
     std::vector<Mesh> meshes;
     std::string directory;
     bool gammaCorrection;
+
+    // Hitbox for collision detection
+    Hitbox calculateHitbox() const;
+    
 private:
     void loadModel(const std::string& path);
     void processNode(aiNode* node, const aiScene* scene);

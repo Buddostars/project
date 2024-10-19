@@ -4,14 +4,16 @@
 
 Cow_Character::Cow_Character(Model& model) 
     : cowModel(model), position(0.0f, 0.0f, -10.0f), direction(0.0f, 0.0f, 1.0f), distanceTraveled(0.0f), moving(true), 
-      rotationAngle(180.0f), stopDuration(0.0f), timeStopped(0.0f), velocity(0.0f), maxSpeed(1.0f), 
-      acceleration(1.0f), deceleration(3.0f), totalRotationAngle(0.0f) {
+      rotationAngle(180.0f), stopDuration(0.0f), timeStopped(0.0f), velocity(0.0f), maxSpeed(20.0f), 
+      acceleration(1.0f), deceleration(3.0f), totalRotationAngle(0.0f), 
+      hitbox(cowModel.calculateHitbox()) // define hitbox 
+      {
     // Initialize cow position, direction, and movement state
 }
 
 
 void Cow_Character::moveRandomly(float deltaTime) {
-    float maxDistance = 5.0f;  // Move forward for 10 meters
+    float maxDistance = 10.0f;  // Move forward for 10 meters
     float accelerationMultiplier = 1.5f;
     rotationSpeed = 50.0f;
 
@@ -66,7 +68,7 @@ void Cow_Character::moveRandomly(float deltaTime) {
         if (distanceTraveled >= maxDistance) {
             moving = false;  // Stop moving
             distanceTraveled = 0.0f;  // Reset distance traveled
-            stopDuration = 2.0f + (rand() % 4);  // Set random stop duration between 2 and 5 seconds
+            stopDuration = 0.5f + (rand() % 4);  // Set random stop duration between .5 and 3.5 seconds
             timeStopped = 0.0f;  // Reset the stopped time
         }
     } else {
@@ -84,6 +86,11 @@ void Cow_Character::moveRandomly(float deltaTime) {
             stopAndRotate();  // Rotate and start moving again
         }
     }
+
+    // Update the cow's hitbox position
+    glm::vec3 boxMin = position + glm::vec3(-1.0f, 0.0f, -1.0f);
+    glm::vec3 boxMax = position + glm::vec3(1.0f, 2.0f, 1.0f);
+    hitbox = Hitbox(boxMin, boxMax);
 }
 
 
@@ -114,4 +121,8 @@ float Cow_Character::getTotalRotationAngle() {
 
 void Cow_Character::draw(Shader& shader) {
     cowModel.draw(shader);  // Render the cow model
+}
+
+Hitbox Cow_Character::getHitbox() const {
+    return hitbox;
 }

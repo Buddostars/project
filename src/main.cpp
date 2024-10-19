@@ -247,14 +247,17 @@ int main() {
     // Create camera object
     Camera camera;
 
-    int treeCount = 50;
+    int treeCount = 10;
     std::vector<glm::vec3> treePositions = generateSpacedObjectPositions(treeCount, 90.0f, 15.0f);  // Range -90 to 90, at least 5 units apart
 
-    int bigRockCount = 80;
+    int bigRockCount = 15;
     std::vector<glm::vec3> bigRockPositions = generateSpacedObjectPositions(bigRockCount, 90.0f, 15.0f);
 
-    int smallRockCount = 50;
+    int smallRockCount = 30;
     std::vector<glm::vec3> smallRockPositions = generateSpacedObjectPositions(smallRockCount, 90.0f, 15.0f);
+
+    // Hitboxes for collision detection
+    std::vector<Hitbox> environmentHitboxes;
 
     std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
 
@@ -339,6 +342,11 @@ int main() {
             
             //Draw the tree model using fixed positions
             // for (const auto& position : treePositions) {
+            //     Hitbox treeHitBox = tree.calculateHitbox();
+            //     treeHitBox.minCorner += position;
+            //     treeHitBox.maxCorner += position;
+            //     environmentHitboxes.push_back(treeHitBox);
+            //
             //     glm::mat4 treeModel = glm::mat4(1.0f);
             //     treeModel = glm::translate(treeModel, position); // Use fixed position
             //     treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
@@ -351,6 +359,11 @@ int main() {
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
+                Hitbox smallRockHitBox = small_rock.calculateHitbox();
+                smallRockHitBox.minCorner += position;
+                smallRockHitBox.maxCorner += position;
+                environmentHitboxes.push_back(smallRockHitBox);
+
                 glm::mat4 smallRockkModel = glm::mat4(1.0f);
                 smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
                 smallRockkModel = glm::scale(smallRockkModel, glm::vec3(3.5f, 3.5f, 3.5f)); // Scale trees if necessary
@@ -362,6 +375,12 @@ int main() {
             }
 
             for (const auto& position : bigRockPositions) {
+                Hitbox bigRockHitBox = big_rock.calculateHitbox();
+                bigRockHitBox.minCorner += position;
+                bigRockHitBox.maxCorner += position;
+                environmentHitboxes.push_back(bigRockHitBox);
+
+
                 glm::mat4 bigRockkModel = glm::mat4(1.0f);
                 bigRockkModel = glm::translate(bigRockkModel, position); // Use fixed position
                 bigRockkModel = glm::scale(bigRockkModel, glm::vec3(1.5f, 1.5f, 1.5f)); // Scale trees if necessary
@@ -397,6 +416,19 @@ int main() {
 
             // Render smoke particles
             exhaustSystem.render(smokeShader, view, projection);
+
+            // Check for collisions between the car and the cow
+            if (car.getHitbox().isColliding(cow.getHitbox())) {
+                std::cout << "Car and cow collided!" << std::endl;
+            }
+
+            // Check for collisions between the car and the environment
+            for (const auto& hitbox : environmentHitboxes) {
+                if (car.getHitbox().isColliding(hitbox)) {
+                    std::cout << "Car and environment collided!" << std::endl;
+                }
+            }
+
         }
 
         glfwSwapBuffers(window);

@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 #include "model.hpp"
+#include "hitbox.hpp"
 
 class Cow_Character {
 public:
@@ -12,6 +13,7 @@ public:
     glm::vec3 getPosition();  // Returns the cow's current position
     float getTotalRotationAngle();
     void draw(Shader& shader);  // Renders the cow model
+    Hitbox getHitbox() const; // Returns the cow's hitbox for collision detection
 
 private:
     glm::vec3 position;       // The current position of the cow
@@ -36,6 +38,9 @@ private:
 
     void stopAndRotate();     // Function to handle stopping and rotating
     Model& cowModel;          // The cow's 3D model
+
+    // Hitbox for collision detection
+    Hitbox hitbox;
 };
 
 #endif

@@ -4,7 +4,10 @@
 
 
 Car::Car(Model& carModel) 
-    :model(carModel), position(0.0f, 0.0f, 0.0f), speed(0.0f), maxSpeed(100.0f), steeringAngle(0.0f), turningSpeed(90.0f) {}
+    :model(carModel), position(0.0f, 0.0f, 0.0f), speed(0.0f), maxSpeed(50.0f), steeringAngle(0.0f), turningSpeed(90.0f),
+    hitbox(carModel.calculateHitbox()) 
+    {}
+    
 
 void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem) {
     static float deceleration = 15.0f;   // Deceleration rate when W key is released
@@ -92,6 +95,12 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
 
     // Update the particle system (smoke emission)
     exhaustSystem.update(deltaTime, position);  // The exhaust position is relative to the car's position
+
+
+    // Update the car's hitbox position
+    glm::vec3 boxMin = position + glm::vec3(-1.0f, 0.0f, -1.0f);
+    glm::vec3 boxMax = position + glm::vec3(1.0f, 2.0f, 1.0f);
+    hitbox = Hitbox(boxMin, boxMax);
 }
 
 
@@ -119,4 +128,8 @@ glm::vec3 Car::getPosition() const {
 
 glm::vec3 Car::getForwardDirection() const {
     return glm::vec3(sin(glm::radians(steeringAngle)), 0.0f, cos(glm::radians(steeringAngle)));
+}
+
+Hitbox Car::getHitbox() const {
+    return hitbox;
 }

@@ -8,6 +8,7 @@
 #include "model.hpp"
 #include "shader.h"
 #include "ExhaustSystem.h"
+#include "hitbox.hpp"
 
 class Car {
 public:
@@ -22,6 +23,7 @@ public:
     // Getters 
     glm::vec3 getPosition() const;
     glm::vec3 getForwardDirection() const;
+    Hitbox getHitbox() const;
 
 private:
     Model model; // Car model
@@ -30,6 +32,9 @@ private:
     float maxSpeed;
     float steeringAngle;
     float turningSpeed;
+
+    // Hitbox for collision detection
+    Hitbox hitbox;
 };
 
 #endif // CAR_HPP
