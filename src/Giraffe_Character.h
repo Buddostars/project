@@ -25,9 +25,12 @@ Giraffe_Character(Model& model);
     float getTotalRotationAngle();
     void draw(Shader& shader);  // Renders the giraffe model
     Hitbox getHitbox() const;  // Returns the giraffe's hitbox for collision detection
-    void gameHit(glm::vec3 hitDirection, float carSpeed);  // Add knockback logic
+    void gameHit(glm::vec3 hitDirection, float cowSpeed, float deltaTime);  // Add knockback logic
+
+    void update(float deltaTime);
 
 private:
+    Model& giraffeModel;      // The giraffe's 3D model
     glm::vec3 position;       // The current position of the giraffe
     glm::vec3 direction;      // The direction the giraffe is facing
     glm::vec3 velocity;
@@ -35,6 +38,7 @@ private:
     bool moving;              // Indicates if the giraffe is currently moving
     bool isRotating;          // Indicates if the giraffe is currently rotating
     float rotationAngle;      // The angle by which the giraffe rotates after stopping
+    float currentRotationAngle; // The current rotation angle
     float targetRotationAngle; // The target rotation angle
     float rotationSpeed;      // The speed of rotation (degrees per second)
     float totalRotationAngle; // The total rotation angle applied to the giraffe
@@ -50,15 +54,22 @@ private:
     float timeStopped;        // How long the giraffe has been stopped
     float counter;
     
-    void stopAndRotate();     // Function to handle stopping and rotating
-    Model& giraffeModel;      // The giraffe's 3D model
-
+    // multithreading and rng variables
     std::mutex giraffeMutex;
     std::mt19937 rng;  // Mersenne Twister random number generator
     std::uniform_real_distribution<float> rotationDist;  // Distribution for rotation angles
 
+    // game logic functions
+    bool isKnockedDown = false;  // Track whether the giraffe is knocked down
+    float knockdownDuration = 0.0f;  // How long the giraffe stays knocked down
+    float knockdownTimer = 0.0f;     // Track how long it has been knocked down
+
     // Hitbox for collision detection
-    Hitbox hitbox;
+    Hitbox hitbox;    
+
+    void stopAndRotate();     // Function to handle stopping and rotating
+    void knockdown();
+    void recoverFromKnockdown(float deltaTime);
 };
 
 #endif

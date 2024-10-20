@@ -364,6 +364,10 @@ int main() {
     // Initialize model position
     glm::vec3 modelPosition(0.0f, 0.0f, 0.0f);
 
+    // game logic checks
+    bool doOnce = true;
+    bool cowInflated = false;
+
     // Initialize time variables
     float lastTime = glfwGetTime();
 
@@ -537,16 +541,26 @@ int main() {
 
             // Check for collisions between the car and the cow
             if (car.getHitbox().isColliding(cow.getHitbox())) {
-                bool doOnce = true;
-
-                if (doOnce) { // prevent multiple knockback force if there is still collision on next frames
+                
+                // prevent multiple knockback force if there is still collision on next frames
+                if (doOnce) { 
                     glm::vec3 hitDirection = cow.getPosition() - car.getPosition();
                     cow.gameHit(hitDirection, car.getSpeed());  // Pass car speed and direction to apply knockback
                     car.gameHit();
-                    doOnce = false;
+                    // doOnce = false; //commented out to allow multiple chances to hit giraffes with cow
+                    cowInflated = true;
                 }
             }
 
+            if (cowInflated) {
+                for (auto& giraffe : giraffes) {
+                    if (cow.getHitbox().isColliding(giraffe.getHitbox())) {
+                        glm::vec3 hitDirection = giraffe.getPosition() - cow.getPosition();
+                        giraffe.gameHit(hitDirection, cow.getSpeed(), deltaTime);
+                    }
+                    giraffe.update(deltaTime);
+                }
+            }
 
             // Check for collisions between the car and the environment
             for (const auto& hitbox : environmentHitboxes) {

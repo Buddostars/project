@@ -284,6 +284,10 @@ Hitbox Cow_Character::getHitbox() const
     return hitbox;
 }
 
+float Cow_Character::getSpeed() const{
+    return speed;
+}
+
 // Knockback logic
 void Cow_Character::gameHit(glm::vec3 hitDirection, float carSpeed)
 {

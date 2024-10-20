@@ -11,7 +11,7 @@
 Giraffe_Character::Giraffe_Character(Model& model)
     : giraffeModel(model), position(0.0f, 0.0f, -30.0f), direction(0.0f, 0.0f, -1.0f), distanceTraveled(0.0f), moving(true),
       rotationAngle(180.0f), stopDuration(0.0f), timeStopped(0.0f), velocity(0.0f), maxSpeed(20.0f),
-      acceleration(1.0f), deceleration(3.0f), totalRotationAngle(0.0f), counter(0.0f),
+      acceleration(1.0f), deceleration(3.0f), totalRotationAngle(0.0f), counter(0.0f), currentRotationAngle(0.0f),
       rng(std::chrono::high_resolution_clock::now().time_since_epoch().count()),
       rotationDist(-45.0f, 45.0f),  // Set up the random distribution for rotation angles
       hitbox(giraffeModel.calculateHitbox()) {
@@ -58,22 +58,30 @@ Giraffe_Character& Giraffe_Character::operator=(Giraffe_Character&& other) noexc
 // Safe modification of position inside moveRandomly
 void Giraffe_Character::moveRandomly(float deltaTime) {
     std::lock_guard<std::mutex> lock(giraffeMutex);
-    // If giraffe is knocked back, gradually reduce velocity
-    if (glm::length2(velocity) > 0.0f) { // Check if velocity is non-zero
-        position += velocity * deltaTime;  // Apply current velocity to position
-        // Apply deceleration to reduce knockback over time
-        float deceleration = 5.0f;  // Rate at which the knockback fades
-        velocity -= glm::normalize(velocity) * deceleration * deltaTime;
-        // Stop when velocity is near zero
-        if (glm::length2(velocity) < 0.01f) {
-            velocity = glm::vec3(0.0f);
-        }
-        // Update the giraffe's hitbox position
-        glm::vec3 boxMin = position + glm::vec3(-1.0f, 0.0f, -1.0f);
-        glm::vec3 boxMax = position + glm::vec3(1.0f, 2.0f, 1.0f);
-        hitbox = Hitbox(boxMin, boxMax);
-        return; // Skip normal movement if in knockback
+    
+    // // If giraffe is knocked back, gradually reduce velocity
+    // if (glm::length2(velocity) > 0.0f) { // Check if velocity is non-zero
+    //     position += velocity * deltaTime;  // Apply current velocity to position
+    //     // Apply deceleration to reduce knockback over time
+    //     float deceleration = 5.0f;  // Rate at which the knockback fades
+    //     velocity -= glm::normalize(velocity) * deceleration * deltaTime;
+    //     // Stop when velocity is near zero
+    //     if (glm::length2(velocity) < 0.01f) {
+    //         velocity = glm::vec3(0.0f);
+    //     }
+    //     // Update the giraffe's hitbox position
+    //     glm::vec3 boxMin = position + glm::vec3(-1.0f, 0.0f, -1.0f);
+    //     glm::vec3 boxMax = position + glm::vec3(1.0f, 2.0f, 1.0f);
+    //     hitbox = Hitbox(boxMin, boxMax);
+    //     return; // Skip normal movement if in knockback
+    // }
+
+    // If giraffe is knocked down, don't allow normal movement
+    if (isKnockedDown) {
+        recoverFromKnockdown(deltaTime);
+        return;
     }
+    
     float maxDistance = 10.0f;  // Move forward for 10 meters
     float accelerationMultiplier = 1.5f;
     rotationSpeed = 20.0f;
@@ -128,11 +136,11 @@ void Giraffe_Character::stopAndRotate() {
     rng.seed(threadIdHash);
 
     // Print the thread ID hash
-    std::cout << "Thread ID hash: " << threadIdHash << std::endl;
+    // std::cout << "Thread ID hash: " << threadIdHash << std::endl;
 
     targetRotationAngle = rotationDist(rng);
     targetRotationAngle = targetRotationAngle + ((targetRotationAngle / abs(targetRotationAngle)) * 15);
-    std::cout << "Giraffe stopped. Target Rotation Angle: " << targetRotationAngle << std::endl;
+    // std::cout << "Giraffe stopped. Target Rotation Angle: " << targetRotationAngle << std::endl;
     isRotating = true;
 }
 
@@ -155,10 +163,72 @@ Hitbox Giraffe_Character::getHitbox() const {
 }
 
 // Knockback logic
-void Giraffe_Character::gameHit(glm::vec3 hitDirection, float carSpeed) {
-    float knockbackMultiplier = 5.0f;
-    glm::vec3 knockbackVelocity = glm::normalize(hitDirection) * carSpeed * knockbackMultiplier;
-    velocity = knockbackVelocity;
+void Giraffe_Character::gameHit(glm::vec3 hitDirection, float cowSpeed, float deltaTime) {
+    if (!isKnockedDown) {
+        // Set the knockback velocity
+        float knockbackMultiplier = 5.0f;
+        glm::vec3 knockbackVelocity = glm::normalize(hitDirection) * cowSpeed * knockbackMultiplier;
+        velocity = knockbackVelocity;
 
-    std::cout << "Giraffe hit! Knockback velocity: " << velocity.x << ", " << velocity.y << ", " << velocity.z << std::endl;
+        // Initiate knockdown effect
+        isKnockedDown = true;
+        knockdownDuration = 3.0f;  // The giraffe stays knocked down for 3 seconds
+        knockdownTimer = 0.0f;
+
+        // Set the target rotation angle for knockdown (rotate along the X-axis)
+        targetRotationAngle = 90.0f;  // Smoothly rotate to lay the giraffe down
+        rotationSpeed = 200.0f;
+
+        std::cout << "Giraffe knocked down! Knockback velocity: " << velocity.x << ", " << velocity.y << ", " << velocity.z << std::endl;
+    }
+}
+
+
+void Giraffe_Character::knockdown() {
+    isKnockedDown = true;
+    knockdownDuration = 3.0f;  // The giraffe will stay down for 3 seconds
+    knockdownTimer = 0.0f;
+
+    // Rotate the giraffe to simulate a knockdown (rotate along the X axis)
+    totalRotationAngle += 90.0f;  // Adjust this for how you want the giraffe to "lay down"
+}
+
+void Giraffe_Character::recoverFromKnockdown(float deltaTime) {
+    // knockdownTimer += deltaTime;
+    // if (knockdownTimer >= knockdownDuration) {
+    //     // Giraffe has recovered, allow it to stand up again
+    //     isKnockedDown = false;
+    //     totalRotationAngle -= 90.0f;  // Reset the rotation to stand the giraffe back up
+    //     velocity = glm::vec3(0.0f);   // Stop any knockback movement
+    //     std::cout << "Giraffe recovered from knockdown." << std::endl;
+    // } else {
+    //     // The giraffe remains knocked down, you can animate it lying down here if needed
+    //     std::cout << "Giraffe is knocked down." << std::endl;
+    // }
+}
+
+void Giraffe_Character::update(float deltaTime) {
+    std::lock_guard<std::mutex> lock(giraffeMutex);
+
+    float rotationStep = rotationSpeed * deltaTime;
+
+    if (isKnockedDown) {
+        knockdownTimer += deltaTime;
+        
+        
+        // Smoothly rotate towards the target angle
+        float rotationStep = rotationSpeed * deltaTime;
+        if (fabs(targetRotationAngle) > rotationStep) {
+            totalRotationAngle += (targetRotationAngle > 0 ? rotationStep : -rotationStep);
+            targetRotationAngle -= (targetRotationAngle > 0 ? rotationStep : -rotationStep);
+        } else {
+            totalRotationAngle += targetRotationAngle;
+            targetRotationAngle = 0.0f;
+        }
+    }
+
+    // Apply the current rotation to the giraffe's transformation matrix (apply rotation along **X-axis** for forward/backward fall)
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(totalRotationAngle), glm::vec3(1.0f, 0.0f, 0.0f));
+    direction = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(1.0f, 1.0f, 1.0f, 0.0f)));
+    std::cout << rotationStep << " " << rotationSpeed << " " << deltaTime << " " << totalRotationAngle << " " << targetRotationAngle << std::endl;
 }
