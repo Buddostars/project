@@ -436,8 +436,16 @@ int main() {
 
             // Check for collisions between the car and the cow
             if (car.getHitbox().isColliding(cow.getHitbox())) {
-                std::cout << "Car and cow collided!" << std::endl;
+                bool doOnce = true;
+
+                if (doOnce) { // prevent multiple knockback force if there is still collision on next frames
+                    glm::vec3 hitDirection = cow.getPosition() - car.getPosition();
+                    cow.gameHit(hitDirection, car.getSpeed());  // Pass car speed and direction to apply knockback
+                    car.gameHit();
+                    doOnce = false;
+                }
             }
+
 
             // Check for collisions between the car and the environment
             for (const auto& hitbox : environmentHitboxes) {

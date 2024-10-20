@@ -18,11 +18,13 @@ public:
     // Functions
     void update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem, std::vector<Hitbox>& environmentHitboxes);
     void draw(Shader& shader);
+    void gameHit();
 
 
     // Getters 
     glm::vec3 getPosition() const;
     glm::vec3 getForwardDirection() const;
+    float getSpeed() const;
     Hitbox getHitbox() const;
 
 private:

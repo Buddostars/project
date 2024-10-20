@@ -157,6 +157,15 @@ glm::vec3 Car::getForwardDirection() const {
     return glm::vec3(sin(glm::radians(steeringAngle)), 0.0f, cos(glm::radians(steeringAngle)));
 }
 
+float Car::getSpeed() const{
+    return speed;
+}
+
 Hitbox Car::getHitbox() const {
     return hitbox;
+}
+
+void Car::gameHit() {
+    std::cout << "Car and cow collided!" << std::endl;
+    speed = -10.0f;
 }
