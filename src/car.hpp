@@ -16,7 +16,7 @@ public:
     Car(Model& model);
 
     // Functions
-    void update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem, std::vector<Hitbox>& environmentHitboxes);
+    void update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem, std::vector<Hitbox>& environmentHitboxes, std::vector<Hitbox>& wallHitboxes);
     void draw(Shader& shader);
     void gameHit();
 

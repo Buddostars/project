@@ -9,7 +9,7 @@ Car::Car(Model& carModel)
     {}
     
 
-void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem, std::vector<Hitbox>& environmentHitboxes) {
+void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem, std::vector<Hitbox>& environmentHitboxes, std::vector<Hitbox>& wallHitboxes) {
     static float deceleration = 15.0f;   // Deceleration rate when W key is released
     static float brakeMultiplier = 40.0f; // Braking deceleration when S key is pressed
     float tau = 5.0f;                    // Time constant for acceleration (adjust this for acceleration speed)
@@ -137,6 +137,17 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
     glm::vec3 boxMin = position + glm::vec3(-1.0f, 0.0f, -1.0f);
     glm::vec3 boxMax = position + glm::vec3(1.0f, 2.0f, 1.0f);
     hitbox = Hitbox(boxMin, boxMax);
+
+    // Check for collisions with the walls
+    for (const auto& wallHitbox : wallHitboxes) {
+        if (hitbox.isColliding(wallHitbox)) {
+            std::cout << "Car and wall collided!" << std::endl;
+            speed = 0.0f;
+            break;
+        }
+    }
+
+    
 }
 
 
