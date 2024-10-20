@@ -4,7 +4,7 @@
 
 
 Car::Car(Model& carModel) 
-    :model(carModel), position(0.0f, 0.0f, 0.0f), speed(0.0f), maxSpeed(50.0f), steeringAngle(0.0f), turningSpeed(90.0f),
+    :model(carModel), position(0.0f, 0.0f, 0.0f), speed(0.0f), maxSpeed(50.0f), steeringAngle(0.0f), turningSpeed(90.0f), collisionInt(0),
     hitbox(carModel.calculateHitbox()) 
     {}
     
@@ -112,14 +112,23 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
         }
     }
     
+    
+
     // If there is a collision, speed is set to 0
     if (!collision) {
         position = newPosition;
-        std::cout << "No collision detected!" << std::endl;
-    } else {
+        if (collisionInt != 1) {
+            std::cout << "No collision detected!" << std::endl;
+            collisionInt = 1;
+        }
         
-        speed = 0.0f;
-        std::cout << "Collision detected!" << std::endl;
+    } else {
+        if (collisionInt != 2) {
+            speed = 0.0f;
+            std::cout << "Collision detected!" << std::endl;
+            collisionInt = 2;
+        }
+        
     }
 
 

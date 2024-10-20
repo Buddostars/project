@@ -34,6 +34,7 @@ private:
     float maxSpeed;
     float steeringAngle;
     float turningSpeed;
+    int collisionInt;
 
     // Hitbox for collision detection
     Hitbox hitbox;
