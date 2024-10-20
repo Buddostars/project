@@ -13,7 +13,6 @@ Cow_Character::Cow_Character(Model& model)
     // Initialize cow position, direction, and movement state
 }
 
-
 void Cow_Character::moveRandomly(float deltaTime) {
     // If cow is knocked back, gradually reduce velocity
     if (glm::length2(velocity) > 0.0f) { // Check if velocity is non-zero
@@ -72,7 +71,7 @@ void Cow_Character::moveRandomly(float deltaTime) {
             glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), radians, glm::vec3(0.0f, 1.0f, 0.0f));
             direction = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)));  // Update the forward direction
         }
-        std::cout << "Rotating by: " << rotationStep << " degrees, Remaining: " << targetRotationAngle << std::endl;
+        // std::cout << "Rotating by: " << rotationStep << " degrees, Remaining: " << targetRotationAngle << std::endl;
 
 
     }
