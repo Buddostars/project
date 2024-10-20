@@ -80,19 +80,25 @@ GLFWwindow* initializeWindow() {
 }
 
 // Function to set light and object properties
-// void setLightingAndObjectProperties(Shader& shader) {
-//     glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
-//     glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
-//     glm::vec3 lightColor(1.0f, 1.0f, 0.9f);
-//     glm::vec3 objectColor(0.6f, 0.6f, 0.6f);
-//     glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
+void setLightingAndObjectProperties(Shader& shader) {
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    GLfloat lightAmbient[] = {0.2f, 0.2f, 0.2f, 0.1f}; 
+    GLfloat lightDiffuse[] = {0.8f, 0.8f, 0.8f, 0.1f};   
+    GLfloat lightSpecilar[] = {0.2f, 0.2f, 0.2f, 0.1f};   
+    GLfloat lightPosition[] = {0.2f, 0.2f, 0.2f, 0.1f};   
+    glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
+    glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
+    glm::vec3 lightColor(1.0f, 1.0f, 0.9f);
+    glm::vec3 objectColor(0.6f, 0.6f, 0.6f);
+    glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
 
-//     shader.setVec3("lightPos", lightPos);
-//     shader.setVec3("lightDirection", lightDirection);
-//     shader.setVec3("lightColor", lightColor);
-//     shader.setVec3("viewPos", viewPos);
-//     shader.setVec3("objectColor", objectColor);
-// }
+    shader.setVec3("lightPos", lightPos);
+    shader.setVec3("lightDirection", lightDirection);
+    shader.setVec3("lightColor", lightColor);
+    shader.setVec3("viewPos", viewPos);
+    shader.setVec3("objectColor", objectColor);
+}
 
 // Function to check the distance between two positions
 bool isPositionValid(const glm::vec3& newPosition, const std::vector<glm::vec3>& existingPositions, float minDistance) {
@@ -173,7 +179,7 @@ void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader) {
 }
 
 
-// Function: renderQuada
+// Function: renderQuad
 void renderQuad(float x, float y, float width, float height) {
     float vertices[] = {
         // Positions          // Texture Coords
@@ -227,14 +233,12 @@ int main() {
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
+
     // Load models
-    
-    Model ground("src/models/ground.obj");
-    std::cout<<"Ground created"<<std::endl;
     Model big_rock("src/models/big_rock.obj");
     Model small_rock("src/models/small_rock.obj");
-    std::cout<<"Rocks created"<<std::endl;
     Model tree("src/models/tree.obj");
+    Model ground("src/models/ground.obj");
     Model carModel("src/models/car.obj");
     Model cowModel("src/models/new_cow.obj");
 
@@ -276,6 +280,9 @@ int main() {
 
     // Initialize model position
     glm::vec3 modelPosition(0.0f, 0.0f, 0.0f);
+
+    
+
 
     // Initialize time variables
     float lastTime = glfwGetTime();
@@ -320,9 +327,6 @@ int main() {
             setLightingAndObjectProperties(shaderProgram);
             setLightingAndObjectProperties(objectShader);
 
-            // Draw the car model   
-            car.draw(objectShader);
-
             // Draw the ground model
             glm::mat4 groundModel = glm::mat4(1.0f);
             groundModel = glm::translate(groundModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of ground
@@ -332,21 +336,21 @@ int main() {
             ground.draw(objectShader); // Draw ground
             
             //Draw the tree model using fixed positions
-            // for (const auto& position : treePositions) {
-            //     Hitbox treeHitBox = tree.calculateHitbox();
-            //     treeHitBox.minCorner += position;
-            //     treeHitBox.maxCorner += position;
-            //     environmentHitboxes.push_back(treeHitBox);
-            //
-            //     glm::mat4 treeModel = glm::mat4(1.0f);
-            //     treeModel = glm::translate(treeModel, position); // Use fixed position
-            //     treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+            for (const auto& position : treePositions) {
+                Hitbox treeHitBox = tree.calculateHitbox();
+                treeHitBox.minCorner += position;
+                treeHitBox.maxCorner += position;
+                environmentHitboxes.push_back(treeHitBox);
+            
+                glm::mat4 treeModel = glm::mat4(1.0f);
+                treeModel = glm::translate(treeModel, position); // Use fixed position
+                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
                 
-            //     objectShader.setMat4("model", treeModel);
-            //     objectShader.setMat4("view", view);
-            //     objectShader.setMat4("projection", projection);
-            //     tree.draw(objectShader); // Draw tree
-            // }
+                objectShader.setMat4("model", treeModel);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+                tree.draw(objectShader); // Draw tree
+            }
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
@@ -398,37 +402,9 @@ int main() {
                 big_rock.draw(objectShader); // Draw big rocks
             }
 
-
             // Draw the car model   
             car.draw(objectShader);
 
-            // Draw the ground model
-            glm::mat4 groundModel = glm::mat4(1.0f);
-            groundModel = glm::translate(groundModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of ground
-            
-            objectShader.setMat4("model", groundModel);
-            objectShader.setMat4("view", view);
-            objectShader.setMat4("projection", projection);
-            ground.draw(objectShader); // Draw ground
-            
-            //Draw the tree model using fixed positions
-            for (const auto& position : treePositions) {
-                Hitbox treeHitBox = tree.calculateHitbox();
-                treeHitBox.minCorner += position;
-                treeHitBox.maxCorner += position;
-                environmentHitboxes.push_back(treeHitBox);
-            
-                glm::mat4 treeModel = glm::mat4(1.0f);
-                treeModel = glm::translate(treeModel, position); // Use fixed position
-                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
-                
-                objectShader.setMat4("model", treeModel);
-                objectShader.setMat4("view", view);
-                objectShader.setMat4("projection", projection);
-                tree.draw(objectShader); // Draw tree
-            }
-
-            
            // Update the cow's position
             cow.moveRandomly(deltaTime);  // Update position and movement logic
 
@@ -478,7 +454,6 @@ int main() {
         }
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     // Cleanup
