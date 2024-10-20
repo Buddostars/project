@@ -217,6 +217,44 @@ void renderQuad(float x, float y, float width, float height) {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+// Hitbox for the walls around map
+    std::vector<Hitbox> wallHitboxes;
+
+void initializeWallsFromGround(const Hitbox& groundHitbox) {
+    glm::vec3 groundMin = groundHitbox.minCorner;
+    glm::vec3 groundMax = groundHitbox.maxCorner;
+
+    // Create Left Wall
+    glm::vec3 leftWallMin = glm::vec3(groundMin.x, 0.0f, groundMin.z);
+    glm::vec3 leftWallMax = glm::vec3(groundMin.x + 1.0f, 5.0f, groundMax.z);
+    wallHitboxes.push_back(Hitbox(leftWallMin, leftWallMax));
+    std::cout << "Left Wall Min: " << leftWallMin.x << ", " << leftWallMin.y << ", " << leftWallMin.z << std::endl;
+    std::cout << "Left Wall Max: " << leftWallMax.x << ", " << leftWallMax.y << ", " << leftWallMax.z << std::endl;
+
+    // Create Right Wall
+    glm::vec3 rightWallMin = glm::vec3(groundMax.x - 1.0f, 0.0f, groundMin.z);
+    glm::vec3 rightWallMax = glm::vec3(groundMax.x, 5.0f, groundMax.z);
+    wallHitboxes.push_back(Hitbox(rightWallMin, rightWallMax));
+    std::cout << "Right Wall Min: " << rightWallMin.x << ", " << rightWallMin.y << ", " << rightWallMin.z << std::endl;
+    std::cout << "Right Wall Max: " << rightWallMax.x << ", " << rightWallMax.y << ", " << rightWallMax.z << std::endl;
+
+    // Create Front Wall(north)
+    glm::vec3 frontWallMin = glm::vec3(groundMin.x, 0.0f, groundMax.z - 1.0f);
+    glm::vec3 frontWallMax = glm::vec3(groundMax.x, 5.0f, groundMax.z);
+    wallHitboxes.push_back(Hitbox(frontWallMin, frontWallMax));
+    std::cout << "Front Wall Min: " << frontWallMin.x << ", " << frontWallMin.y << ", " << frontWallMin.z << std::endl;
+    std::cout << "Front Wall Max: " << frontWallMax.x << ", " << frontWallMax.y << ", " << frontWallMax.z << std::endl;
+
+
+    // Create Back Wall(south)
+    glm::vec3 backWallMin = glm::vec3(groundMin.x, 0.0f, groundMin.z);
+    glm::vec3 backWallMax = glm::vec3(groundMax.x, 5.0f, groundMin.z + 1.0f);
+    wallHitboxes.push_back(Hitbox(backWallMin, backWallMax));
+    std::cout << "Back Wall Min: " << backWallMin.x << ", " << backWallMin.y << ", " << backWallMin.z << std::endl;
+    std::cout << "Back Wall Max: " << backWallMax.x << ", " << backWallMax.y << ", " << backWallMax.z << std::endl;
+   
+
+}
 
 // Main function
 int main() {
@@ -239,6 +277,10 @@ int main() {
     Model cowModel("src/models/new_cow.obj");
     Model giraffeModel("src/models/new_giraffe.obj");
     
+    // Create game objects
+    Hitbox groundHitbox = ground.calculateHitbox();
+    glm::vec3 groundMin = groundHitbox.minCorner;
+    glm::vec3 groundMax = groundHitbox.maxCorner;
 
     Car car(carModel);
     Cow_Character cow(cowModel);
@@ -263,7 +305,8 @@ int main() {
     // Hitboxes for collision detection
     std::vector<Hitbox> environmentHitboxes;
 
-    std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
+    
+
 
     // Load the loading screen image as a texture
     loadingScreenTexture = loadTexture("src/loading-screen-image.png");
@@ -276,23 +319,11 @@ int main() {
         std::cout << "Loading screen texture loaded successfully. ID: " << loadingScreenTexture << std::endl;
     }
 
-    
-
-    // // Set light properties
-    // glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
-    // glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
-    // glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
-    // glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
-    // glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
-
-    // Initialize model position
-    glm::vec3 modelPosition(0.0f, 0.0f, 0.0f);
-
-    
-
-
     // Initialize time variables
     float lastTime = glfwGetTime();
+
+    // Initialize the walls around the map
+    initializeWallsFromGround(groundHitbox);
 
     // Main loop
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
@@ -319,7 +350,7 @@ int main() {
             renderLoadingScreen(loadingScreenTexture, quadShader);
         } else if (currentState == STATE_GAME) {
 
-            car.update(deltaTime, window, exhaustSystem, environmentHitboxes);
+            car.update(deltaTime, window, exhaustSystem, environmentHitboxes, wallHitboxes);
 
             camera.computeMatricesFromInputs(window, car.getPosition(), car.getForwardDirection());
             
@@ -346,22 +377,6 @@ int main() {
             objectShader.setMat4("projection", projection);
             ground.draw(objectShader); // Draw ground
             
-            //Draw the tree model using fixed positions
-            for (const auto& position : treePositions) {
-                Hitbox treeHitBox = tree.calculateHitbox();
-                treeHitBox.minCorner += position;
-                treeHitBox.maxCorner += position;
-                environmentHitboxes.push_back(treeHitBox);
-            
-                glm::mat4 treeModel = glm::mat4(1.0f);
-                treeModel = glm::translate(treeModel, position); // Use fixed position
-                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
-                
-                objectShader.setMat4("model", treeModel);
-                objectShader.setMat4("view", view);
-                objectShader.setMat4("projection", projection);
-                tree.draw(objectShader); // Draw tree
-            }
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
@@ -414,7 +429,7 @@ int main() {
             }
 
            // Update the cow's position
-            cow.moveRandomly(deltaTime);  // Update position and movement logic
+            cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
 
             glm::mat4 cowModelMatrix = glm::mat4(1.0f);
             cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());

@@ -9,7 +9,7 @@ class Cow_Character {
 public:
     Cow_Character(Model& model);
 
-    void moveRandomly(float deltaTime);  // Updates the cow's position randomly based on deltaTime
+    void moveRandomly(float deltaTime, const std::vector<Hitbox>& environmentHitboxes, const std::vector<Hitbox>& wallHitboxes );  // Updates the cow's position randomly based on deltaTime
     glm::vec3 getPosition();  // Returns the cow's current position
     float getTotalRotationAngle();
     void draw(Shader& shader);  // Renders the cow model
