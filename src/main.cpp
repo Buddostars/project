@@ -228,15 +228,18 @@ int main() {
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
     // Load models
+    
+    Model ground("src/models/ground.obj");
+    std::cout<<"Ground created"<<std::endl;
     Model big_rock("src/models/big_rock.obj");
     Model small_rock("src/models/small_rock.obj");
+    std::cout<<"Rocks created"<<std::endl;
     Model tree("src/models/tree.obj");
-    Model ground("src/models/ground.obj");
     Model carModel("src/models/car.obj");
     Model cowModel("src/models/new_cow.obj");
 
     Car car(carModel);
-
+    std::cout<<"all models created"<<std::endl;
     // Particle system for smoke (position the exhaust pipe relatively to the car)
     glm::vec3 exhaustOffset = glm::vec3(-1.0f, 0.5f, -2.0f);  // Example exhaust position on the left side of the car
     ExhaustSystem exhaustSystem(100, exhaustOffset);  // Max 100 particles
@@ -333,7 +336,6 @@ int main() {
                 objectShader.setMat4("model", treeModel);
                 objectShader.setMat4("view", view);
                 objectShader.setMat4("projection", projection);
-
                 tree.draw(objectShader); // Draw tree
             }
 
