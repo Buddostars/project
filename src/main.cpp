@@ -128,6 +128,32 @@ std::vector<glm::vec3> generateSpacedObjectPositions(int count, float range, flo
     return positions;
 }
 
+// Function to generate bowling pin positions with at least 5 units of distance between them
+std::vector<glm::vec3> generateBowlingPinPositions(glm::vec3 center) {
+    std::vector<glm::vec3> positions;
+
+    // line 1
+    positions.push_back(center + glm::vec3(0.0f, 0.0f, 2.0f));
+
+    // line 2
+    positions.push_back(center + glm::vec3(-0.5f, 0.0f, 1.0f));
+    positions.push_back(center + glm::vec3(0.5f, 0.0f, 1.0f));
+
+    // line 3
+    positions.push_back(center + glm::vec3(-1.0f, 0.0f, 0.0f));
+    positions.push_back(center);
+    positions.push_back(center + glm::vec3(1.0f, 0.0f, 0.0f));
+
+    // line 4
+    positions.push_back(center + glm::vec3(-1.5f, 0.0f, -1.0f));
+    positions.push_back(center + glm::vec3(-0.5f, 0.0f, -1.0f));
+    positions.push_back(center + glm::vec3(0.5f, 0.0f, -1.0f));
+    positions.push_back(center + glm::vec3(1.5f, 0.0f, -1.0f));
+    
+
+    return positions;
+}
+
 // Declare the texture ID for the loading screen
 unsigned int loadingScreenTexture;
 
@@ -284,7 +310,13 @@ int main() {
 
     Car car(carModel);
     Cow_Character cow(cowModel);
-    Giraffe_Character giraffe(giraffeModel);  // Async load the giraffe model
+
+    std::vector<Giraffe_Character> giraffes;
+    glm::vec3 center(0.0f, 0.0f, -20.0f);
+    for (const auto& position : generateBowlingPinPositions(center)) {
+        Giraffe_Character giraffe(giraffeModel, position);
+        giraffes.push_back(giraffe);
+    }
 
         // Particle system for smoke (position the exhaust pipe relatively to the car)
     glm::vec3 exhaustOffset = glm::vec3(-1.0f, 0.5f, -2.0f);  // Example exhaust position on the left side of the car
@@ -305,8 +337,7 @@ int main() {
     // Hitboxes for collision detection
     std::vector<Hitbox> environmentHitboxes;
 
-    
-
+    std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
 
     // Load the loading screen image as a texture
     loadingScreenTexture = loadTexture("src/loading-screen-image.png");
@@ -318,6 +349,18 @@ int main() {
     } else {
         std::cout << "Loading screen texture loaded successfully. ID: " << loadingScreenTexture << std::endl;
     }
+
+    
+
+    // // Set light properties
+    // glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
+    // glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
+    // glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
+    // glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
+    // glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
+
+    // Initialize model position
+    glm::vec3 modelPosition(0.0f, 0.0f, 0.0f);
 
     // Initialize time variables
     float lastTime = glfwGetTime();
@@ -377,6 +420,22 @@ int main() {
             objectShader.setMat4("projection", projection);
             ground.draw(objectShader); // Draw ground
             
+            //Draw the tree model using fixed positions
+            for (const auto& position : treePositions) {
+                Hitbox treeHitBox = tree.calculateHitbox();
+                treeHitBox.minCorner += position;
+                treeHitBox.maxCorner += position;
+                environmentHitboxes.push_back(treeHitBox);
+            
+                glm::mat4 treeModel = glm::mat4(1.0f);
+                treeModel = glm::translate(treeModel, position); // Use fixed position
+                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+                
+                objectShader.setMat4("model", treeModel);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+                tree.draw(objectShader); // Draw tree
+            }
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
@@ -444,21 +503,24 @@ int main() {
             // Render the cow
             cow.draw(objectShader);
 
-            // Inside the main loop:
-            giraffe.moveRandomly(deltaTime);  // Update giraffe position
+            //Draw the giraffe models using fixed positions
+            for (Giraffe_Character giraffe : giraffes) {
+                // Update giraffe position
+                giraffe.moveRandomly(deltaTime);
 
-            glm::mat4 giraffeModelMatrix = glm::mat4(1.0f);
-            giraffeModelMatrix = glm::translate(giraffeModelMatrix, giraffe.getPosition());
-            giraffeModelMatrix = glm::rotate(giraffeModelMatrix, glm::radians(giraffe.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
-            giraffeModelMatrix = glm::scale(giraffeModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
+                glm::mat4 giraffeModelMatrix = glm::mat4(1.0f);
+                giraffeModelMatrix = glm::translate(giraffeModelMatrix, giraffe.getPosition());
+                giraffeModelMatrix = glm::rotate(giraffeModelMatrix, glm::radians(giraffe.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
+                giraffeModelMatrix = glm::scale(giraffeModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
+                    
+                // Pass the updated matrices to the shader
+                objectShader2.setMat4("model", giraffeModelMatrix);
+                objectShader2.setMat4("view", view);
+                objectShader2.setMat4("projection", projection);
 
-            // Pass the updated matrices to the shader
-            objectShader2.setMat4("model", giraffeModelMatrix);
-            objectShader2.setMat4("view", view);
-            objectShader2.setMat4("projection", projection);
-
-            // Render the giraffe
-            giraffe.draw(objectShader2);
+                 // Render the giraffe
+                giraffe.draw(objectShader2);
+            }
 
             // Render smoke particles
             exhaustSystem.render(smokeShader, view, projection);

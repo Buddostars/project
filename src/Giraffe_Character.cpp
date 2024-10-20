@@ -12,6 +12,14 @@ Giraffe_Character::Giraffe_Character(Model& model)
     // Initialize giraffe position, direction, and movement state
 }
 
+Giraffe_Character::Giraffe_Character(Model& model, glm::vec3 position)
+    : giraffeModel(model), position(position), direction(0.0f, 0.0f, -1.0f), distanceTraveled(0.0f), moving(true),
+      rotationAngle(180.0f), stopDuration(0.0f), timeStopped(0.0f), velocity(0.0f), maxSpeed(20.0f),
+      acceleration(1.0f), deceleration(3.0f), totalRotationAngle(0.0f), counter(0.0f),
+      hitbox(giraffeModel.calculateHitbox()) {
+    // Initialize giraffe position, direction, and movement state
+}
+
 void Giraffe_Character::moveRandomly(float deltaTime) {
     // If giraffe is knocked back, gradually reduce velocity
     if (glm::length2(velocity) > 0.0f) { // Check if velocity is non-zero

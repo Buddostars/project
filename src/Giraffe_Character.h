@@ -8,6 +8,7 @@
 class Giraffe_Character {
 public:
     Giraffe_Character(Model& model);
+    Giraffe_Character(Model& model, glm::vec3 position);
 
     void moveRandomly(float deltaTime);  // Updates the giraffe's position randomly based on deltaTime
     glm::vec3 getPosition();  // Returns the giraffe's current position
