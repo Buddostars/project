@@ -80,19 +80,19 @@ GLFWwindow* initializeWindow() {
 }
 
 // Function to set light and object properties
-void setLightingAndObjectProperties(Shader& shader) {
-    glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
-    glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
-    glm::vec3 lightColor(1.0f, 1.0f, 0.9f);
-    glm::vec3 objectColor(0.6f, 0.6f, 0.6f);
-    glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
+// void setLightingAndObjectProperties(Shader& shader) {
+//     glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
+//     glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
+//     glm::vec3 lightColor(1.0f, 1.0f, 0.9f);
+//     glm::vec3 objectColor(0.6f, 0.6f, 0.6f);
+//     glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
 
-    shader.setVec3("lightPos", lightPos);
-    shader.setVec3("lightDirection", lightDirection);
-    shader.setVec3("lightColor", lightColor);
-    shader.setVec3("viewPos", viewPos);
-    shader.setVec3("objectColor", objectColor);
-}
+//     shader.setVec3("lightPos", lightPos);
+//     shader.setVec3("lightDirection", lightDirection);
+//     shader.setVec3("lightColor", lightColor);
+//     shader.setVec3("viewPos", viewPos);
+//     shader.setVec3("objectColor", objectColor);
+// }
 
 // Function to check the distance between two positions
 bool isPositionValid(const glm::vec3& newPosition, const std::vector<glm::vec3>& existingPositions, float minDistance) {
@@ -316,37 +316,8 @@ int main() {
 
             glm::mat4 view = camera.getViewMatrix();
             glm::mat4 projection = camera.getProjectionMatrix();
-            setLightingAndObjectProperties(shaderProgram);
-            setLightingAndObjectProperties(objectShader);
-
-            // Draw the car model   
-            car.draw(objectShader);
-
-            // Draw the ground model
-            glm::mat4 groundModel = glm::mat4(1.0f);
-            groundModel = glm::translate(groundModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of ground
-            
-            objectShader.setMat4("model", groundModel);
-            objectShader.setMat4("view", view);
-            objectShader.setMat4("projection", projection);
-            ground.draw(objectShader); // Draw ground
-            
-            //Draw the tree model using fixed positions
-            for (const auto& position : treePositions) {
-                Hitbox treeHitBox = tree.calculateHitbox();
-                treeHitBox.minCorner += position;
-                treeHitBox.maxCorner += position;
-                environmentHitboxes.push_back(treeHitBox);
-            
-                glm::mat4 treeModel = glm::mat4(1.0f);
-                treeModel = glm::translate(treeModel, position); // Use fixed position
-                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
-                
-                objectShader.setMat4("model", treeModel);
-                objectShader.setMat4("view", view);
-                objectShader.setMat4("projection", projection);
-                tree.draw(objectShader); // Draw tree
-            }
+            // setLightingAndObjectProperties(shaderProgram);
+            // setLightingAndObjectProperties(objectShader);
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
@@ -398,6 +369,37 @@ int main() {
                 big_rock.draw(objectShader); // Draw big rocks
             }
 
+
+            // Draw the car model   
+            car.draw(objectShader);
+
+            // Draw the ground model
+            glm::mat4 groundModel = glm::mat4(1.0f);
+            groundModel = glm::translate(groundModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of ground
+            
+            objectShader.setMat4("model", groundModel);
+            objectShader.setMat4("view", view);
+            objectShader.setMat4("projection", projection);
+            ground.draw(objectShader); // Draw ground
+            
+            //Draw the tree model using fixed positions
+            for (const auto& position : treePositions) {
+                Hitbox treeHitBox = tree.calculateHitbox();
+                treeHitBox.minCorner += position;
+                treeHitBox.maxCorner += position;
+                environmentHitboxes.push_back(treeHitBox);
+            
+                glm::mat4 treeModel = glm::mat4(1.0f);
+                treeModel = glm::translate(treeModel, position); // Use fixed position
+                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+                
+                objectShader.setMat4("model", treeModel);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+                tree.draw(objectShader); // Draw tree
+            }
+
+            
            // Update the cow's position
             cow.moveRandomly(deltaTime);  // Update position and movement logic
 
