@@ -23,6 +23,8 @@
                 "${workspaceFolder}/src/model.cpp",
                 "${workspaceFolder}/src/ExhaustSystem.cpp",
                 "${workspaceFolder}/src/texture_loader.cpp",
+                "${workspaceFolder}/src/hitbox.cpp",
+                "${workspaceFolder}/src/Giraffe_Character.cpp",
                 "${workspaceFolder}/src/glad.c",
                 "-o",
                 "${workspaceFolder}/app",
