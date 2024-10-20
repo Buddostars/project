@@ -129,8 +129,8 @@ void Cow_Character::stopAndRotate() {
     isRotating = true;
 
     // The cow will stop moving and rotate over time
-    std::cout << "Old direction: " << direction.x << ", " << direction.y << ", " << direction.z << std::endl;
-    std::cout << "Target rotation angle: " << randomRotationAngle << std::endl;
+    // std::cout << "Old direction: " << direction.x << ", " << direction.y << ", " << direction.z << std::endl;
+    // std::cout << "Target rotation angle: " << randomRotationAngle << std::endl;
 }
 
 
