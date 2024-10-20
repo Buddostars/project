@@ -12,6 +12,8 @@ public:
 
     //Method to check if two hitboxes are colliding
     bool isColliding(const Hitbox& other) const;
+
+    bool operator==(const Hitbox& other) const;
 };
 
 #endif // HITBOX_HPP

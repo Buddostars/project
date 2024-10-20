@@ -9,7 +9,7 @@ Car::Car(Model& carModel)
     {}
     
 
-void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem, const std::vector<Hitbox>& environmentHitboxes) {
+void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem, std::vector<Hitbox>& environmentHitboxes) {
     static float deceleration = 15.0f;   // Deceleration rate when W key is released
     static float brakeMultiplier = 40.0f; // Braking deceleration when S key is pressed
     float tau = 5.0f;                    // Time constant for acceleration (adjust this for acceleration speed)
@@ -157,6 +157,15 @@ glm::vec3 Car::getForwardDirection() const {
     return glm::vec3(sin(glm::radians(steeringAngle)), 0.0f, cos(glm::radians(steeringAngle)));
 }
 
+float Car::getSpeed() const{
+    return speed;
+}
+
 Hitbox Car::getHitbox() const {
     return hitbox;
+}
+
+void Car::gameHit() {
+    std::cout << "Car and cow collided!" << std::endl;
+    speed = -10.0f;
 }

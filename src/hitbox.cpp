@@ -15,3 +15,7 @@ bool Hitbox::isColliding(const Hitbox& other) const {
     // If all three axes overlap, the hitboxes are colliding
     return xOverlap && yOverlap && zOverlap;
 }
+
+bool Hitbox::operator==(const Hitbox& other) const {
+        return minCorner == other.minCorner && maxCorner == other.maxCorner;
+}

@@ -292,6 +292,7 @@ int main() {
 
     // Main loop
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
+        
         glfwPollEvents(); // Process events
 
         float currentTime = glfwGetTime();
@@ -362,7 +363,15 @@ int main() {
                 Hitbox smallRockHitBox = small_rock.calculateHitbox();
                 smallRockHitBox.minCorner += position;
                 smallRockHitBox.maxCorner += position;
-                environmentHitboxes.push_back(smallRockHitBox);
+                // Check if this hitbox already exists in environmentHitboxes
+                bool isUnique = std::none_of(environmentHitboxes.begin(), environmentHitboxes.end(),
+                                            [&](const Hitbox& hitbox) {
+                                                return hitbox == smallRockHitBox;
+                                            });
+
+                if (isUnique) {
+                    environmentHitboxes.push_back(smallRockHitBox);
+                }
 
                 glm::mat4 smallRockkModel = glm::mat4(1.0f);
                 smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
@@ -378,7 +387,15 @@ int main() {
                 Hitbox bigRockHitBox = big_rock.calculateHitbox();
                 bigRockHitBox.minCorner += position;
                 bigRockHitBox.maxCorner += position;
-                environmentHitboxes.push_back(bigRockHitBox);
+                // Check if this hitbox already exists in environmentHitboxes
+                bool isUnique = std::none_of(environmentHitboxes.begin(), environmentHitboxes.end(),
+                                            [&](const Hitbox& hitbox) {
+                                                return hitbox == bigRockHitBox;
+                                            });
+
+                if (isUnique) {
+                    environmentHitboxes.push_back(bigRockHitBox);
+                }
 
 
                 glm::mat4 bigRockkModel = glm::mat4(1.0f);
@@ -419,8 +436,16 @@ int main() {
 
             // Check for collisions between the car and the cow
             if (car.getHitbox().isColliding(cow.getHitbox())) {
-                std::cout << "Car and cow collided!" << std::endl;
+                bool doOnce = true;
+
+                if (doOnce) { // prevent multiple knockback force if there is still collision on next frames
+                    glm::vec3 hitDirection = cow.getPosition() - car.getPosition();
+                    cow.gameHit(hitDirection, car.getSpeed());  // Pass car speed and direction to apply knockback
+                    car.gameHit();
+                    doOnce = false;
+                }
             }
+
 
             // Check for collisions between the car and the environment
             for (const auto& hitbox : environmentHitboxes) {
@@ -428,7 +453,7 @@ int main() {
                     std::cout << "Car and environment collided!" << std::endl;
                 }
             }
-
+            
         }
 
         glfwSwapBuffers(window);
