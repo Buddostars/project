@@ -230,5 +230,5 @@ void Giraffe_Character::update(float deltaTime) {
     // Apply the current rotation to the giraffe's transformation matrix (apply rotation along **X-axis** for forward/backward fall)
     glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(totalRotationAngle), glm::vec3(1.0f, 0.0f, 0.0f));
     direction = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(1.0f, 1.0f, 1.0f, 0.0f)));
-    std::cout << rotationStep << " " << rotationSpeed << " " << deltaTime << " " << totalRotationAngle << " " << targetRotationAngle << std::endl;
+    // std::cout << rotationStep << " " << rotationSpeed << " " << deltaTime << " " << totalRotationAngle << " " << targetRotationAngle << std::endl;
 }
