@@ -1,17 +1,42 @@
 #include "Cow_Character.h"
 #include <cstdlib>  // For random number generation
 #include <glm/gtc/matrix_transform.hpp> // For rotation
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
 
 Cow_Character::Cow_Character(Model& model) 
     : cowModel(model), position(0.0f, 0.0f, -10.0f), direction(0.0f, 0.0f, 1.0f), distanceTraveled(0.0f), moving(true), 
-      rotationAngle(180.0f), stopDuration(0.0f), timeStopped(0.0f), velocity(0.0f), maxSpeed(1.0f), 
-      acceleration(1.0f), deceleration(3.0f), totalRotationAngle(0.0f) {
+      rotationAngle(180.0f), stopDuration(0.0f), timeStopped(0.0f), velocity(0.0f), maxSpeed(20.0f), 
+      acceleration(1.0f), deceleration(3.0f), totalRotationAngle(0.0f), 
+      hitbox(cowModel.calculateHitbox()) // define hitbox 
+      {
     // Initialize cow position, direction, and movement state
 }
 
 
 void Cow_Character::moveRandomly(float deltaTime) {
-    float maxDistance = 5.0f;  // Move forward for 10 meters
+    // If cow is knocked back, gradually reduce velocity
+    if (glm::length2(velocity) > 0.0f) { // Check if velocity is non-zero
+        position += velocity * deltaTime;  // Apply current velocity to position
+
+        // Apply deceleration to reduce knockback over time
+        float deceleration = 5.0f;  // Rate at which the knockback fades
+        velocity -= glm::normalize(velocity) * deceleration * deltaTime;
+
+        // Stop when velocity is near zero
+        if (glm::length2(velocity) < 0.01f) {
+            velocity = glm::vec3(0.0f);
+        }
+
+        // Update the cow's hitbox position
+        glm::vec3 boxMin = position + glm::vec3(-1.0f, 0.0f, -1.0f);
+        glm::vec3 boxMax = position + glm::vec3(1.0f, 2.0f, 1.0f);
+        hitbox = Hitbox(boxMin, boxMax);
+
+        return; // Skip normal movement if in knockback
+    }
+
+    float maxDistance = 10.0f;  // Move forward for 10 meters
     float accelerationMultiplier = 1.5f;
     rotationSpeed = 50.0f;
 
@@ -28,13 +53,13 @@ void Cow_Character::moveRandomly(float deltaTime) {
             targetRotationAngle -= (targetRotationAngle > 0 ? rotationStep : -rotationStep);
 
             // // Accelerate the cow towards max speed
-            // if (velocity < maxSpeed) {
-            //     velocity += acceleration * deltaTime * accelerationMultiplier;
-            //     if (velocity > maxSpeed) velocity = maxSpeed;  // Cap the velocity at max speed
+            // if (speed < maxSpeed) {
+            //     speed += acceleration * deltaTime * accelerationMultiplier;
+            //     if (speed > maxSpeed) speed = maxSpeed;  // Cap the speed at max speed
             // }
 
-            // // Move forward in the current direction based on the current velocity
-            // position += direction * velocity * deltaTime;
+            // // Move forward in the current direction based on the current speed
+            // position += direction * speed * deltaTime;
         } else {
             // Finish the rotation, update the direction vector
             totalRotationAngle += targetRotationAngle;  // Apply the remaining rotation
@@ -53,27 +78,27 @@ void Cow_Character::moveRandomly(float deltaTime) {
     }
     if (moving) {
         // Accelerate the cow towards max speed
-        if (velocity < maxSpeed) {
-            velocity += acceleration * deltaTime * accelerationMultiplier;
-            if (velocity > maxSpeed) velocity = maxSpeed;  // Cap the velocity at max speed
+        if (speed < maxSpeed) {
+            speed += acceleration * deltaTime * accelerationMultiplier;
+            if (speed > maxSpeed) speed = maxSpeed;  // Cap the speed at max speed
         }
 
-        // Move forward in the current direction based on the current velocity
-        position += direction * velocity * deltaTime;
-        distanceTraveled += velocity * deltaTime;
+        // Move forward in the current direction based on the current speed
+        position += direction * speed * deltaTime;
+        distanceTraveled += speed * deltaTime;
 
         // Check if the cow has traveled the maximum distance
         if (distanceTraveled >= maxDistance) {
             moving = false;  // Stop moving
             distanceTraveled = 0.0f;  // Reset distance traveled
-            stopDuration = 2.0f + (rand() % 4);  // Set random stop duration between 2 and 5 seconds
+            stopDuration = 0.5f + (rand() % 4);  // Set random stop duration between .5 and 3.5 seconds
             timeStopped = 0.0f;  // Reset the stopped time
         }
     } else {
         // Decelerate the cow smoothly when stopping
-        if (velocity > 0.0f) {
-            velocity -= deceleration * deltaTime;
-            if (velocity < 0.0f) velocity = 0.0f;  // Prevent velocity from going negative
+        if (speed > 0.0f) {
+            speed -= deceleration * deltaTime;
+            if (speed < 0.0f) speed = 0.0f;  // Prevent speed from going negative
         }
 
         // Update how long the cow has been stopped
@@ -84,6 +109,11 @@ void Cow_Character::moveRandomly(float deltaTime) {
             stopAndRotate();  // Rotate and start moving again
         }
     }
+
+    // Update the cow's hitbox position
+    glm::vec3 boxMin = position + glm::vec3(-1.0f, 0.0f, -1.0f);
+    glm::vec3 boxMax = position + glm::vec3(1.0f, 2.0f, 1.0f);
+    hitbox = Hitbox(boxMin, boxMax);
 }
 
 
@@ -99,8 +129,8 @@ void Cow_Character::stopAndRotate() {
     isRotating = true;
 
     // The cow will stop moving and rotate over time
-    std::cout << "Old direction: " << direction.x << ", " << direction.y << ", " << direction.z << std::endl;
-    std::cout << "Target rotation angle: " << randomRotationAngle << std::endl;
+    // std::cout << "Old direction: " << direction.x << ", " << direction.y << ", " << direction.z << std::endl;
+    // std::cout << "Target rotation angle: " << randomRotationAngle << std::endl;
 }
 
 
@@ -114,4 +144,20 @@ float Cow_Character::getTotalRotationAngle() {
 
 void Cow_Character::draw(Shader& shader) {
     cowModel.draw(shader);  // Render the cow model
+}
+
+Hitbox Cow_Character::getHitbox() const {
+    return hitbox;
+}
+
+// Knockback logic
+void Cow_Character::gameHit(glm::vec3 hitDirection, float carSpeed) {
+    // Apply knockback based on the car's direction and speed
+    float knockbackMultiplier = 5.0f;  // Control the force of knockback
+    glm::vec3 knockbackVelocity = glm::normalize(hitDirection) * carSpeed * knockbackMultiplier;
+
+    // Update cow's velocity to apply knockback
+    velocity = knockbackVelocity;
+
+    std::cout << "Cow hit! Knockback velocity: " << velocity.x << ", " << velocity.y << ", " << velocity.z << std::endl;
 }

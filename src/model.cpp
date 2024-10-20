@@ -188,3 +188,25 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
 
     return textureID;
 }
+
+// Calculate the hitbox for the model
+Hitbox Model::calculateHitbox() const {
+    glm::vec3 minCorner(FLT_MAX, FLT_MAX, FLT_MAX);
+    glm::vec3 maxCorner(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+    for (const auto& mesh : meshes) {
+
+        for (const auto& vertex : mesh.vertices) {
+            
+            minCorner.x = std::min(minCorner.x, vertex.Position.x);
+            minCorner.y = std::min(minCorner.y, vertex.Position.y);
+            minCorner.z = std::min(minCorner.z, vertex.Position.z);
+
+            maxCorner.x = std::max(maxCorner.x, vertex.Position.x);
+            maxCorner.y = std::max(maxCorner.y, vertex.Position.y);
+            maxCorner.z = std::max(maxCorner.z, vertex.Position.z);
+        }
+    }
+
+    return Hitbox(minCorner, maxCorner);
+}

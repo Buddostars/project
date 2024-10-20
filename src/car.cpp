@@ -4,9 +4,12 @@
 
 
 Car::Car(Model& carModel) 
-    :model(carModel), position(0.0f, 0.0f, 0.0f), speed(0.0f), maxSpeed(100.0f), steeringAngle(0.0f), turningSpeed(90.0f) {}
+    :model(carModel), position(0.0f, 0.0f, 0.0f), speed(0.0f), maxSpeed(50.0f), steeringAngle(0.0f), turningSpeed(90.0f),
+    hitbox(carModel.calculateHitbox()) 
+    {}
+    
 
-void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem) {
+void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem, std::vector<Hitbox>& environmentHitboxes) {
     static float deceleration = 15.0f;   // Deceleration rate when W key is released
     static float brakeMultiplier = 40.0f; // Braking deceleration when S key is pressed
     float tau = 5.0f;                    // Time constant for acceleration (adjust this for acceleration speed)
@@ -17,6 +20,8 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
     bool reverse = false;
     bool braking = false;                // Check if braking is applied
     float accelerationMultiplier = 6.0f;  // Multiplier for forward acceleration
+
+    glm::vec3 newPosition = position;  // Predict the new position based on current speed
 
     // Extract the car's forward direction from the transformation matrix
     glm::vec3 forwardDirection = getForwardDirection();
@@ -30,7 +35,7 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
         speed = maxSpeed - (maxSpeed - currentSpeed) * exp(-deltaTime / tau);
 
         forward = true;
-        position -= forwardDirection * speed * deltaTime;
+        newPosition -= forwardDirection * speed * deltaTime;
     } 
     else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         if (speed > 0.0f) {
@@ -51,7 +56,7 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
         }
 
         // Move the car backward while reversing
-        position -= forwardDirection * speed * deltaTime;  // Reverse moves car forward (since speed is negative)
+        newPosition -= forwardDirection * speed * deltaTime;  // Reverse moves car forward (since speed is negative)
     } 
     else {
         // Gradually decelerate when no key is pressed
@@ -68,7 +73,7 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
         }
 
         // Apply momentum to continue moving the car forward or backward based on speed
-        position -= forwardDirection * speed * deltaTime;
+        newPosition -= forwardDirection * speed * deltaTime;
     }
 
     // Handle car turning (only allow turning while moving forward or reverse)
@@ -92,6 +97,37 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
 
     // Update the particle system (smoke emission)
     exhaustSystem.update(deltaTime, position);  // The exhaust position is relative to the car's position
+    
+    // Check for collisions with the environment
+    bool collision = false;
+    Hitbox newHitbox = hitbox;
+    glm::vec3 offset = newPosition - position;
+    newHitbox.minCorner += offset;
+    newHitbox.maxCorner += offset;
+
+    for (const auto& envHitbox : environmentHitboxes) {
+        if (newHitbox.isColliding(envHitbox)) {
+            collision = true;
+            break;
+        }
+    }
+    
+    // If there is a collision, speed is set to 0
+    if (!collision) {
+        position = newPosition;
+        std::cout << "No collision detected!" << std::endl;
+    } else {
+        
+        speed = 0.0f;
+        std::cout << "Collision detected!" << std::endl;
+    }
+
+
+
+    // Update the car's hitbox position
+    glm::vec3 boxMin = position + glm::vec3(-1.0f, 0.0f, -1.0f);
+    glm::vec3 boxMax = position + glm::vec3(1.0f, 2.0f, 1.0f);
+    hitbox = Hitbox(boxMin, boxMax);
 }
 
 
@@ -119,4 +155,17 @@ glm::vec3 Car::getPosition() const {
 
 glm::vec3 Car::getForwardDirection() const {
     return glm::vec3(sin(glm::radians(steeringAngle)), 0.0f, cos(glm::radians(steeringAngle)));
+}
+
+float Car::getSpeed() const{
+    return speed;
+}
+
+Hitbox Car::getHitbox() const {
+    return hitbox;
+}
+
+void Car::gameHit() {
+    std::cout << "Car and cow collided!" << std::endl;
+    speed = -10.0f;
 }

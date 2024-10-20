@@ -8,6 +8,7 @@
 #include "model.hpp"
 #include "shader.h"
 #include "ExhaustSystem.h"
+#include "hitbox.hpp"
 
 class Car {
 public:
@@ -15,13 +16,16 @@ public:
     Car(Model& model);
 
     // Functions
-    void update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem);
+    void update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem, std::vector<Hitbox>& environmentHitboxes);
     void draw(Shader& shader);
+    void gameHit();
 
 
     // Getters 
     glm::vec3 getPosition() const;
     glm::vec3 getForwardDirection() const;
+    float getSpeed() const;
+    Hitbox getHitbox() const;
 
 private:
     Model model; // Car model
@@ -30,6 +34,9 @@ private:
     float maxSpeed;
     float steeringAngle;
     float turningSpeed;
+
+    // Hitbox for collision detection
+    Hitbox hitbox;
 };
 
 #endif // CAR_HPP

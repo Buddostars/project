@@ -70,3 +70,4 @@ _deps
 CMakeUserPresets.json
 
 build/
+src/models/giraffe.obj
