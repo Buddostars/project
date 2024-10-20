@@ -342,21 +342,21 @@ int main() {
             ground.draw(objectShader); // Draw ground
             
             //Draw the tree model using fixed positions
-            // for (const auto& position : treePositions) {
-            //     Hitbox treeHitBox = tree.calculateHitbox();
-            //     treeHitBox.minCorner += position;
-            //     treeHitBox.maxCorner += position;
-            //     environmentHitboxes.push_back(treeHitBox);
-            //
-            //     glm::mat4 treeModel = glm::mat4(1.0f);
-            //     treeModel = glm::translate(treeModel, position); // Use fixed position
-            //     treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+            for (const auto& position : treePositions) {
+                Hitbox treeHitBox = tree.calculateHitbox();
+                treeHitBox.minCorner += position;
+                treeHitBox.maxCorner += position;
+                environmentHitboxes.push_back(treeHitBox);
+            
+                glm::mat4 treeModel = glm::mat4(1.0f);
+                treeModel = glm::translate(treeModel, position); // Use fixed position
+                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
                 
-            //     objectShader.setMat4("model", treeModel);
-            //     objectShader.setMat4("view", view);
-            //     objectShader.setMat4("projection", projection);
-            //     tree.draw(objectShader); // Draw tree
-            // }
+                objectShader.setMat4("model", treeModel);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+                tree.draw(objectShader); // Draw tree
+            }
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
