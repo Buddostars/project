@@ -1,6 +1,8 @@
 #include "Cow_Character.h"
 #include <cstdlib>                      // For random number generation
 #include <glm/gtc/matrix_transform.hpp> // For rotation
+#include <functional>
+#include <thread>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
 

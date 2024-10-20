@@ -2,13 +2,23 @@
 #define GIRAFFE_CHARACTER_H
 
 #include <glm/glm.hpp>
+#include <mutex>
+#include <random>
 #include "model.hpp"
 #include "hitbox.hpp"
 
 class Giraffe_Character {
 public:
-    Giraffe_Character(Model& model);
+Giraffe_Character(Model& model);
     Giraffe_Character(Model& model, glm::vec3 position);
+
+    // Disable copy constructor and copy assignment operator
+    Giraffe_Character(const Giraffe_Character&) = delete;
+    Giraffe_Character& operator=(const Giraffe_Character&) = delete;
+
+    // Enable move constructor and move assignment operator (custom ones)
+    Giraffe_Character(Giraffe_Character&& other) noexcept;
+    Giraffe_Character& operator=(Giraffe_Character&& other) noexcept;
 
     void moveRandomly(float deltaTime);  // Updates the giraffe's position randomly based on deltaTime
     glm::vec3 getPosition();  // Returns the giraffe's current position
@@ -42,6 +52,10 @@ private:
     
     void stopAndRotate();     // Function to handle stopping and rotating
     Model& giraffeModel;      // The giraffe's 3D model
+
+    std::mutex giraffeMutex;
+    std::mt19937 rng;  // Mersenne Twister random number generator
+    std::uniform_real_distribution<float> rotationDist;  // Distribution for rotation angles
 
     // Hitbox for collision detection
     Hitbox hitbox;

@@ -16,6 +16,7 @@
 #include <unordered_set>
 #include <iostream>
 #include <stb_image.h>
+#include <future>
 
 #include "shader.h"
 #include "controls.hpp"
@@ -310,12 +311,13 @@ int main() {
 
     Car car(carModel);
     Cow_Character cow(cowModel);
+    //Giraffe_Character giraffe(giraffeModel);
 
     std::vector<Giraffe_Character> giraffes;
     glm::vec3 center(0.0f, 0.0f, -20.0f);
     for (const auto& position : generateBowlingPinPositions(center)) {
-        Giraffe_Character giraffe(giraffeModel, position);
-        giraffes.push_back(giraffe);
+        giraffes.emplace_back(giraffeModel, position);  // This will use the move constructor
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 5 milliseconds
     }
 
         // Particle system for smoke (position the exhaust pipe relatively to the car)
@@ -503,22 +505,30 @@ int main() {
             // Render the cow
             cow.draw(objectShader);
 
-            //Draw the giraffe models using fixed positions
-            for (Giraffe_Character giraffe : giraffes) {
-                // Update giraffe position
-                giraffe.moveRandomly(deltaTime);
+            // Use a thread pool for giraffe updates
+            std::vector<std::future<void>> futures;
+            
+            for (auto& giraffe : giraffes) {
+                futures.push_back(std::async(std::launch::async, [&giraffe, deltaTime]() {
+                    giraffe.moveRandomly(deltaTime);
+                }));
+            }
 
+            // Wait for all giraffes to finish updating
+            for (auto& future : futures) {
+                future.get();  // Ensure all updates are complete
+            }
+
+            // Render the giraffes after movement updates
+            for (auto& giraffe : giraffes) {
                 glm::mat4 giraffeModelMatrix = glm::mat4(1.0f);
                 giraffeModelMatrix = glm::translate(giraffeModelMatrix, giraffe.getPosition());
                 giraffeModelMatrix = glm::rotate(giraffeModelMatrix, glm::radians(giraffe.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
                 giraffeModelMatrix = glm::scale(giraffeModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
-                    
-                // Pass the updated matrices to the shader
+
                 objectShader2.setMat4("model", giraffeModelMatrix);
                 objectShader2.setMat4("view", view);
                 objectShader2.setMat4("projection", projection);
-
-                 // Render the giraffe
                 giraffe.draw(objectShader2);
             }
 
