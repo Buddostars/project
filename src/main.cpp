@@ -24,7 +24,6 @@
 #include "globals.hpp"
 #include "car.hpp"
 #include "Cow_Character.h"
-#include "Giraffe_Character.h"
 #include "ExhaustSystem.h"
 
 // Define the GameState enum before using it
@@ -227,7 +226,6 @@ int main() {
     Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
-    Shader objectShader2("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
     // Load models
     
@@ -239,16 +237,14 @@ int main() {
     Model tree("src/models/tree.obj");
     Model carModel("src/models/car.obj");
     Model cowModel("src/models/new_cow.obj");
-    Model giraffeModel("src/models/new_giraffe.obj");
-    
 
     Car car(carModel);
-    Cow_Character cow(cowModel);
-    Giraffe_Character giraffe(giraffeModel);  // Async load the giraffe model
 
-        // Particle system for smoke (position the exhaust pipe relatively to the car)
+    // Particle system for smoke (position the exhaust pipe relatively to the car)
     glm::vec3 exhaustOffset = glm::vec3(-1.0f, 0.5f, -2.0f);  // Example exhaust position on the left side of the car
     ExhaustSystem exhaustSystem(100, exhaustOffset);  // Max 100 particles
+
+    Cow_Character cow(cowModel);
 
     // Create camera object
     Camera camera;
@@ -317,13 +313,40 @@ int main() {
 
             shaderProgram.use();
             objectShader.use();
-            objectShader2.use();
             //shaderProgram.setSampler("texture_diffuse", 0);
 
             glm::mat4 view = camera.getViewMatrix();
             glm::mat4 projection = camera.getProjectionMatrix();
-            // setLightingAndObjectProperties(shaderProgram);
-            // setLightingAndObjectProperties(objectShader);
+            setLightingAndObjectProperties(shaderProgram);
+            setLightingAndObjectProperties(objectShader);
+
+            // Draw the car model   
+            car.draw(objectShader);
+
+            // Draw the ground model
+            glm::mat4 groundModel = glm::mat4(1.0f);
+            groundModel = glm::translate(groundModel, glm::vec3(0.0f, 0.0f, 0.0f)); // Position of ground
+            objectShader.setMat4("model", groundModel);
+            objectShader.setMat4("view", view);
+            objectShader.setMat4("projection", projection);
+            ground.draw(objectShader); // Draw ground
+            
+            //Draw the tree model using fixed positions
+            // for (const auto& position : treePositions) {
+            //     Hitbox treeHitBox = tree.calculateHitbox();
+            //     treeHitBox.minCorner += position;
+            //     treeHitBox.maxCorner += position;
+            //     environmentHitboxes.push_back(treeHitBox);
+            //
+            //     glm::mat4 treeModel = glm::mat4(1.0f);
+            //     treeModel = glm::translate(treeModel, position); // Use fixed position
+            //     treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
+                
+            //     objectShader.setMat4("model", treeModel);
+            //     objectShader.setMat4("view", view);
+            //     objectShader.setMat4("projection", projection);
+            //     tree.draw(objectShader); // Draw tree
+            // }
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
@@ -409,9 +432,16 @@ int main() {
            // Update the cow's position
             cow.moveRandomly(deltaTime);  // Update position and movement logic
 
+            // Draw the cow model using the updated position and rotation
             glm::mat4 cowModelMatrix = glm::mat4(1.0f);
+
+            // Apply translation for the cow's position
             cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
+
+            // Apply rotation for the cow's direction (use totalRotationAngle for smooth rotation)
             cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
+
+            // Scale the cow to 0.1x size
             cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
 
             // Pass the updated matrices to the shader
@@ -421,22 +451,6 @@ int main() {
 
             // Render the cow
             cow.draw(objectShader);
-
-            // Inside the main loop:
-            giraffe.moveRandomly(deltaTime);  // Update giraffe position
-
-            glm::mat4 giraffeModelMatrix = glm::mat4(1.0f);
-            giraffeModelMatrix = glm::translate(giraffeModelMatrix, giraffe.getPosition());
-            giraffeModelMatrix = glm::rotate(giraffeModelMatrix, glm::radians(giraffe.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
-            giraffeModelMatrix = glm::scale(giraffeModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
-
-            // Pass the updated matrices to the shader
-            objectShader2.setMat4("model", giraffeModelMatrix);
-            objectShader2.setMat4("view", view);
-            objectShader2.setMat4("projection", projection);
-
-            // Render the giraffe
-            giraffe.draw(objectShader2);
 
             // Render smoke particles
             exhaustSystem.render(smokeShader, view, projection);
