@@ -1,11 +1,12 @@
 #include "mesh.hpp"
 
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, Material material)
 {
     this->vertices = vertices;
     this->indices = indices;
     this->textures = textures;
+    this->material = material;
 
     setupMesh();
 }
@@ -53,6 +54,13 @@ void Mesh::Draw(Shader &shader)
         shader.setInt(("material." + name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
     }
+
+    // Setting material properties
+    shader.setVec3("material.ambient", material.ambient);
+    shader.setVec3("material.diffuse", material.diffuse);
+    shader.setVec3("material.specular", material.specular);
+    shader.setFloat("material.shininess", material.shininess);
+    
     glActiveTexture(GL_TEXTURE0);
 
     // draw mesh

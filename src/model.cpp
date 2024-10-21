@@ -107,9 +107,12 @@ Mesh Model:: processMesh(aiMesh *mesh, const aiScene *scene){
     // 4. height maps
     std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-        
+    
+    // load material
+    Material mat = loadMaterials(material);
+
     // return a mesh object created from the extracted mesh data
-    return Mesh(vertices, indices, textures);
+    return Mesh(vertices, indices, textures, mat);
 }
 
 void Model::draw(Shader& shader) {
@@ -145,6 +148,25 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType 
         }
     }
     return textures;
+}
+
+// function to load Materials (from *.mtl) for model and save them in a vector
+Material Model::loadMaterials(aiMaterial *mat){
+    aiString name;
+    aiColor3D color;
+    float shininess;
+    mat->Get(AI_MATKEY_NAME, name);
+    mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+    mat->Get(AI_MATKEY_SHININESS, shininess);
+    Material material;
+    material.name = name.C_Str();
+    material.shininess = shininess;
+    material.diffuse = glm::vec3(color.r, color.g, color.b);
+    mat->Get(AI_MATKEY_COLOR_SPECULAR, color);
+    material.specular = glm::vec3(color.r, color.g, color.b);
+    mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
+    material.ambient = glm::vec3(color.r, color.g, color.b);
+    return material;
 }
 
 

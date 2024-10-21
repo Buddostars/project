@@ -23,6 +23,7 @@
 #include "globals.hpp"
 #include "mesh.hpp"
 #include "texture.hpp"
+#include "material.hpp"
 #include "vertex.hpp"
 #include "hitbox.hpp"
 
@@ -45,6 +46,7 @@ private:
     void processNode(aiNode* node, const aiScene* scene);
     Mesh processMesh(aiMesh* mesh, const aiScene* scene);
     std::vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName);
+    Material loadMaterials(aiMaterial *mat);
 };
 
 unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma = false);
