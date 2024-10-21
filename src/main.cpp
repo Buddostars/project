@@ -32,13 +32,19 @@
 enum GameState {
     STATE_MENU,
     STATE_GAME,
+    STATE_END_GAME, // Added this line
     STATE_PAUSE,
     // Add more later if required
 };
 
-
 // Game state variable
 GameState currentState = STATE_MENU;
+
+// Game variables
+float gameStartTime = 0.0f;
+float gameTimeElapsed = 0.0f;
+int gameScore = 0;
+bool gameStarted = false;
 
 struct Vec3Hash {
     std::size_t operator()(const glm::vec3& v) const {
@@ -176,6 +182,22 @@ void processMenuInput(GLFWwindow* window) {
     }
 }
 
+// Function to process input in the end game state
+void processEndGameInput(GLFWwindow* window) {
+    // Detect when the user clicks "Restart" and change to the game state
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        ypos = 768.0 - ypos; // Invert Y coordinate
+        if (xpos >= 337.0 && xpos <= 687.0 && ypos >= 430.0 && ypos <= 500.0) {
+            currentState = STATE_GAME;
+            gameScore = 0;
+            gameStartTime = glfwGetTime();
+            gameStarted = true;
+        }
+    }
+}
+
 // Function: renderLoadingScreen
 void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -200,6 +222,29 @@ void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader) {
     glEnable(GL_DEPTH_TEST);
 }
 
+// Function to render the end game screen
+void renderEndGameScreen(Shader& quadShader) {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Disable depth testing so 2D elements are rendered on top
+    glDisable(GL_DEPTH_TEST);
+
+    // Set up orthographic projection for 2D rendering
+    glm::mat4 projection = glm::ortho(0.0f, 1024.0f, 0.0f, 768.0f);
+    quadShader.use();
+    quadShader.setMat4("projection", projection);
+
+    // Bind the background texture (you can use the same or different texture)
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, loadingScreenTexture);
+    quadShader.setInt("texture1", 0);
+
+    // Render the quad for the background
+    renderQuad(0.0f, 0.0f, 1024.0f, 768.0f); // Full-screen background quad
+
+    // Re-enable depth testing
+    glEnable(GL_DEPTH_TEST);
+}
 
 // Function: renderQuad
 void renderQuad(float x, float y, float width, float height) {
@@ -398,6 +443,21 @@ int main() {
             // Render the loading screen with background image
             renderLoadingScreen(loadingScreenTexture, quadShader);
         } else if (currentState == STATE_GAME) {
+            if (!gameStarted) {
+                gameStartTime = glfwGetTime();
+                gameScore = 0;
+                gameStarted = true;
+            }
+
+            // Compute game time elapsed
+            gameTimeElapsed = currentTime - gameStartTime;
+
+            // Check if 30 seconds have passed
+            if (gameTimeElapsed >= 30.0f) {
+                currentState = STATE_END_GAME;
+                gameStarted = false;
+                std::cout << "Game over! Final Score: " << gameScore << std::endl;
+            }
 
             car.update(deltaTime, window, exhaustSystem, environmentHitboxes, wallHitboxes);
 
@@ -557,6 +617,10 @@ int main() {
                     if (cow.getHitbox().isColliding(giraffe.getHitbox())) {
                         glm::vec3 hitDirection = giraffe.getPosition() - cow.getPosition();
                         giraffe.gameHit(hitDirection, cow.getSpeed(), deltaTime);
+
+                        // Score one point for each giraffe hit by a cow
+                        gameScore++;
+                        std::cout << "Giraffe hit! Current Score: " << gameScore << std::endl;
                     }
                     giraffe.update(deltaTime);
                 }
@@ -569,6 +633,15 @@ int main() {
                 }
             }
             
+        } else if (currentState == STATE_END_GAME) {
+            // Show the cursor in the end game menu
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+            // Process end game input
+            processEndGameInput(window);
+
+            // Render the end game screen
+            renderEndGameScreen(quadShader);
         }
 
         glfwSwapBuffers(window);
