@@ -25,7 +25,6 @@
                 "${workspaceFolder}/src/texture_loader.cpp",
                 "${workspaceFolder}/src/hitbox.cpp",
                 "${workspaceFolder}/src/Giraffe_Character.cpp",
-                "${workspaceFolder}/src/cubemap.cpp",
                 "${workspaceFolder}/src/glad.c",
                 "-o",
                 "${workspaceFolder}/app",

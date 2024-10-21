@@ -32,7 +32,7 @@ public:
     Model(std::string const &path, bool gamma = false) : gammaCorrection(gamma) {
         loadModel(path);
     }
-    void draw(Shader& shader, unsigned int cubemapTextureID = -1);
+    void draw(Shader& shader);
     std::vector<Texture> textures_loaded; 
     std::vector<Mesh> meshes;
     std::string directory;
