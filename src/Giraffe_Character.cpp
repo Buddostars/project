@@ -163,8 +163,9 @@ Hitbox Giraffe_Character::getHitbox() const {
 }
 
 // Knockback logic
-void Giraffe_Character::gameHit(glm::vec3 hitDirection, float cowSpeed, float deltaTime) {
+void Giraffe_Character::gameHit(glm::vec3 hitDirection, float cowSpeed, float deltaTime, int& gameScore) {
     if (!isKnockedDown) {
+        gameScore++;
         // Set the knockback velocity
         float knockbackMultiplier = 5.0f;
         glm::vec3 knockbackVelocity = glm::normalize(hitDirection) * cowSpeed * knockbackMultiplier;

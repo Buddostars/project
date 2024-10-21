@@ -25,7 +25,7 @@ Giraffe_Character(Model& model);
     float getTotalRotationAngle();
     void draw(Shader& shader);  // Renders the giraffe model
     Hitbox getHitbox() const;  // Returns the giraffe's hitbox for collision detection
-    void gameHit(glm::vec3 hitDirection, float cowSpeed, float deltaTime);  // Add knockback logic
+    void gameHit(glm::vec3 hitDirection, float cowSpeed, float deltaTime, int& gameScore);  // Add knockback logic
 
     void update(float deltaTime);
      void reset(const glm::vec3& newPosition);

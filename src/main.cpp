@@ -656,10 +656,10 @@ int main() {
                 for (auto& giraffe : giraffes) {
                     if (cow.getHitbox().isColliding(giraffe.getHitbox())) {
                         glm::vec3 hitDirection = giraffe.getPosition() - cow.getPosition();
-                        giraffe.gameHit(hitDirection, cow.getSpeed(), deltaTime);
+                        giraffe.gameHit(hitDirection, cow.getSpeed(), deltaTime, gameScore);
 
-                        // Score one point for each giraffe hit by a cow
-                        gameScore++;
+                        // // Score one point for each giraffe hit by a cow
+                        // gameScore++;
                         std::cout << "Giraffe hit! Current Score: " << gameScore << std::endl;
                     }
                     giraffe.update(deltaTime);
