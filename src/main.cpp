@@ -636,8 +636,6 @@ int main() {
                 giraffe.draw(objectShader2);
             }
 
-            // Render smoke particles
-            exhaustSystem.render(smokeShader, view, projection);
 
             // Check for collisions between the car and the cow
             if (car.getHitbox().isColliding(cow.getHitbox())) {
@@ -672,6 +670,9 @@ int main() {
                     std::cout << "Car and environment collided!" << std::endl;
                 }
             }
+
+            // Render smoke particles
+            exhaustSystem.render(smokeShader, view, projection);
 
             // Render the score at the top left
             std::string scoreText = "SCORE: " + std::to_string(gameScore);
