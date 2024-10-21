@@ -224,7 +224,6 @@ void TextRenderer::RenderText(const std::string& text, float x, float y, float s
     }
 
     glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
 
     // Disable blending after rendering
     glDisable(GL_BLEND);
