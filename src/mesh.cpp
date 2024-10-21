@@ -36,7 +36,7 @@ void Mesh::setupMesh() {
     glBindVertexArray(0);
 }
 
-void Mesh::Draw(Shader &shader) 
+void Mesh::Draw(Shader &shader, unsigned int cubemapTextureID) 
 {
     unsigned int diffuseNr = 1;
     unsigned int specularNr = 1;
@@ -60,7 +60,18 @@ void Mesh::Draw(Shader &shader)
     shader.setVec3("material.diffuse", material.diffuse);
     shader.setVec3("material.specular", material.specular);
     shader.setFloat("material.shininess", material.shininess);
-    
+
+    // Setting cubemap texture
+    if (cubemapTextureID != -1) {
+        // Set the reflection flag in the shader
+        shader.setBool("applyReflection", true);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTextureID);
+        shader.setInt("enviroMap", cubemapTextureID);
+        //shader.setBool("applyReflection", false);
+        printf("Is reflection applied? %d\n", true);
+    }
+
     glActiveTexture(GL_TEXTURE0);
 
     // draw mesh

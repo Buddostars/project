@@ -27,6 +27,7 @@
 #include "Cow_Character.h"
 #include "Giraffe_Character.h"
 #include "ExhaustSystem.h"
+#include "cubemap.hpp"
 
 // Define the GameState enum before using it
 enum GameState {
@@ -293,6 +294,7 @@ int main() {
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader objectShader2("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
+    Shader carShader("src/shaders/old_vertex_shader.vert", "src/shaders/old_fragment_shader.frag");
     Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
 
     // Load models
@@ -363,6 +365,19 @@ int main() {
     // Initialize the walls around the map
     initializeWallsFromGround(groundHitbox);
 
+
+    // load cubemap
+    std::vector<std::string> faces
+        {
+            "src/cubemap/lnegy.png",   // Positive X (right face)
+            "src/cubemap/lnegz.png",    // Negative X (left face)
+            "src/cubemap/lnegx.png",     // Positive Y (top face)
+            "src/cubemap/lposx.png",  // Negative Y (bottom face)
+            "src/cubemap/lposy.png",   // Positive Z (front face)
+            "src/cubemap/lposz.png"     // Negative Z (back face)
+        };
+    Cubemap cubemap(faces);  // Load the cubemap
+
     // Main loop
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
         
@@ -397,15 +412,20 @@ int main() {
             shaderProgram.use();
             objectShader.use();
             objectShader2.use();
+            carShader.use();
             //shaderProgram.setSampler("texture_diffuse", 0);
 
             glm::mat4 view = camera.getViewMatrix();
             glm::mat4 projection = camera.getProjectionMatrix();
             setLightingAndObjectProperties(shaderProgram);
             setLightingAndObjectProperties(objectShader);
+            setLightingAndObjectProperties(carShader);
+
+
+            cubemap.draw(carShader);  // Draw the cubemap
 
             // Draw the car model   
-            car.draw(objectShader);
+            car.draw(objectShader, -1);
 
             // Draw the ground model
             glm::mat4 groundModel = glm::mat4(1.0f);
@@ -479,7 +499,7 @@ int main() {
             objectShader.setMat4("projection", projection);
 
             // Render the cow
-            cow.draw(objectShader);
+            cow.draw(carShader, -1);
 
             // Use a thread pool for giraffe updates
             std::vector<std::future<void>> futures;

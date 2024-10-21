@@ -21,7 +21,7 @@ public:
     Material material;
 
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, Material material);
-    void Draw(Shader& shader);
+    void Draw(Shader& shader, unsigned int cubemapTextureID = -1);
 
 private:
     // Render data
