@@ -166,6 +166,8 @@ void Car::draw(Shader& shader) {
     carModelMatrix = glm::scale(carModelMatrix, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale car if necessary
 
     shader.setMat4("model", carModelMatrix);
+
+    // Draw the car model
     model.draw(shader);
 }
 

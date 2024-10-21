@@ -30,6 +30,7 @@
 #include "Giraffe_Character.h"
 #include "ExhaustSystem.h"
 #include "TextRenderer.h"   // To show the game score
+#include "cubemap.hpp"
 
 // Define the GameState enum before using it
 enum GameState {
@@ -407,6 +408,7 @@ int main() {
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader objectShader2("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
+    Shader reflectionShader("src/shaders/reflection_vertex_shader.vert", "src/shaders/reflection_fragment_shader.frag");
     Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
     Shader textShader("src/shaders/text_shader.vert", "src/shaders/text_shader.frag");
 
@@ -416,7 +418,7 @@ int main() {
     Model tree("src/models/tree.obj");
     Model ground("src/models/ground.obj");
     Model carModel("src/models/car.obj");
-    Model cowModel("src/models/new_cow.obj");
+    Model cowModel("src/models/cow.obj");
     Model giraffeModel("src/models/new_giraffe.obj");
     
     // Create game objects
@@ -439,8 +441,8 @@ int main() {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100 milliseconds
     }
 
-    // Particle system for smoke (position the exhaust pipe relatively to the car)
-    glm::vec3 exhaustOffset = glm::vec3(-1.0f, 0.5f, -2.0f);  // Example exhaust position on the left side of the car
+        // Particle system for smoke (position the exhaust pipe relatively to the car)
+    glm::vec3 exhaustOffset = glm::vec3(0.0f, 0.7f, 0.0f);  // GTA-style damage smoke
     ExhaustSystem exhaustSystem(100, exhaustOffset);  // Max 100 particles
 
     // Create camera object
@@ -486,6 +488,18 @@ int main() {
     // Set up projection matrix for text rendering
     glm::mat4 textProjection = glm::ortho(0.0f, static_cast<float>(1024), 0.0f, static_cast<float>(768));
     textRenderer.SetProjection(textProjection);
+
+    // load cubemap
+    std::vector<std::string> faces
+        {
+            "src/cubemap/lnegy.png",   // Positive X (right face)
+            "src/cubemap/lnegz.png",    // Negative X (left face)
+            "src/cubemap/lnegx.png",     // Positive Y (top face)
+            "src/cubemap/lposx.png",  // Negative Y (bottom face)
+            "src/cubemap/lposy.png",   // Positive Z (front face)
+            "src/cubemap/lposz.png"     // Negative Z (back face)
+        };
+    Cubemap cubemap(faces);  // Load the cubemap
 
     // Main loop
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
@@ -533,13 +547,15 @@ int main() {
 
             shaderProgram.use();
             objectShader.use();
-            objectShader2.use();
             //shaderProgram.setSampler("texture_diffuse", 0);
 
             glm::mat4 view = camera.getViewMatrix();
             glm::mat4 projection = camera.getProjectionMatrix();
             setLightingAndObjectProperties(shaderProgram);
             setLightingAndObjectProperties(objectShader);
+
+
+            cubemap.draw(objectShader);  // Draw the cubemap
 
             // Draw the car model   
             car.draw(objectShader);
@@ -551,59 +567,12 @@ int main() {
             objectShader.setMat4("view", view);
             objectShader.setMat4("projection", projection);
             ground.draw(objectShader); // Draw ground
-           
-            // Draw the rocks
-            for (const auto& position : smallRockPositions) {
-                Hitbox smallRockHitBox = small_rock.calculateHitbox();
-                smallRockHitBox.minCorner += position;
-                smallRockHitBox.maxCorner += position;
-                // Check if this hitbox already exists in environmentHitboxes
-                bool isUnique = std::none_of(environmentHitboxes.begin(), environmentHitboxes.end(),
-                                            [&](const Hitbox& hitbox) {
-                                                return hitbox == smallRockHitBox;
-                                            });
 
-                if (isUnique) {
-                    environmentHitboxes.push_back(smallRockHitBox);
-                }
-
-                glm::mat4 smallRockkModel = glm::mat4(1.0f);
-                smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
-                smallRockkModel = glm::scale(smallRockkModel, glm::vec3(3.5f, 3.5f, 3.5f)); // Scale trees if necessary
-                
-                objectShader.setMat4("model", smallRockkModel);
-                objectShader.setMat4("view", view);
-                objectShader.setMat4("projection", projection);
-                small_rock.draw(objectShader); // Draw small rocks
-            }
-
-            for (const auto& position : bigRockPositions) {
-                Hitbox bigRockHitBox = big_rock.calculateHitbox();
-                bigRockHitBox.minCorner += position;
-                bigRockHitBox.maxCorner += position;
-                // Check if this hitbox already exists in environmentHitboxes
-                bool isUnique = std::none_of(environmentHitboxes.begin(), environmentHitboxes.end(),
-                                            [&](const Hitbox& hitbox) {
-                                                return hitbox == bigRockHitBox;
-                                            });
-
-                if (isUnique) {
-                    environmentHitboxes.push_back(bigRockHitBox);
-                }
-
-
-                glm::mat4 bigRockkModel = glm::mat4(1.0f);
-                bigRockkModel = glm::translate(bigRockkModel, position); // Use fixed position
-                bigRockkModel = glm::scale(bigRockkModel, glm::vec3(1.5f, 1.5f, 1.5f)); // Scale trees if necessary
-                
-                objectShader.setMat4("model", bigRockkModel);
-                objectShader.setMat4("view", view);
-                objectShader.setMat4("projection", projection);
-                big_rock.draw(objectShader); // Draw big rocks
-            }
 
         //    // Update the cow's position
         //     cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
+            // Update the cow's position
+            cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
 
         //     glm::mat4 cowModelMatrix = glm::mat4(1.0f);
         //     cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
@@ -658,7 +627,8 @@ int main() {
             for (auto& future : giraffeFutures) {
                 future.get();  // Ensure all updates are complete
             }
-
+            
+            objectShader2.use();
             // Render the giraffes after movement updates
             for (auto& giraffe : giraffes) {
                 glm::mat4 giraffeModelMatrix = glm::mat4(1.0f);
@@ -672,6 +642,63 @@ int main() {
                 giraffe.draw(objectShader2);
             }
 
+            reflectionShader.use();
+            setLightingAndObjectProperties(reflectionShader);
+
+            // Draw the rocks
+            for (const auto& position : smallRockPositions) {
+                Hitbox smallRockHitBox = small_rock.calculateHitbox();
+                smallRockHitBox.minCorner += position;
+                smallRockHitBox.maxCorner += position;
+                // Check if this hitbox already exists in environmentHitboxes
+                bool isUnique = std::none_of(environmentHitboxes.begin(), environmentHitboxes.end(),
+                                            [&](const Hitbox& hitbox) {
+                                                return hitbox == smallRockHitBox;
+                                            });
+
+                if (isUnique) {
+                    environmentHitboxes.push_back(smallRockHitBox);
+                }
+
+                glm::mat4 smallRockkModel = glm::mat4(1.0f);
+                smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
+                smallRockkModel = glm::scale(smallRockkModel, glm::vec3(3.5f, 3.5f, 3.5f)); // Scale trees if necessary
+                
+                reflectionShader.setMat4("model", smallRockkModel);
+                reflectionShader.setMat4("view", view);
+                reflectionShader.setMat4("projection", projection);
+                reflectionShader.setVec3("cameraPos", camera.position);
+                small_rock.draw(reflectionShader, cubemap.getTextureID()); // Draw small rocks
+            }
+
+            for (const auto& position : bigRockPositions) {
+                Hitbox bigRockHitBox = big_rock.calculateHitbox();
+                bigRockHitBox.minCorner += position;
+                bigRockHitBox.maxCorner += position;
+                // Check if this hitbox already exists in environmentHitboxes
+                bool isUnique = std::none_of(environmentHitboxes.begin(), environmentHitboxes.end(),
+                                            [&](const Hitbox& hitbox) {
+                                                return hitbox == bigRockHitBox;
+                                            });
+
+                if (isUnique) {
+                    environmentHitboxes.push_back(bigRockHitBox);
+                }
+
+
+                glm::mat4 bigRockkModel = glm::mat4(1.0f);
+                bigRockkModel = glm::translate(bigRockkModel, position); // Use fixed position
+                bigRockkModel = glm::scale(bigRockkModel, glm::vec3(1.5f, 1.5f, 1.5f)); // Scale trees if necessary
+                
+                reflectionShader.setMat4("model", bigRockkModel);
+                reflectionShader.setMat4("view", view);
+                reflectionShader.setMat4("projection", projection);
+                reflectionShader.setVec3("cameraPos", camera.position);
+                big_rock.draw(reflectionShader, cubemap.getTextureID()); // Draw big rocks
+            }
+
+            // Render smoke particles
+            exhaustSystem.render(smokeShader, view, projection);
 
             // Check for collisions between the car and the cows
             for (auto& cow : cows) {
