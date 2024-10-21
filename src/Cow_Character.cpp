@@ -127,6 +127,7 @@ void Cow_Character::moveRandomly(float deltaTime, const std::vector<Hitbox> &env
                 }
             }
         }
+        
         return; // Skip normal movement if in knockback
     }
 
@@ -174,6 +175,7 @@ void Cow_Character::moveRandomly(float deltaTime, const std::vector<Hitbox> &env
     }
     if (moving)
     {
+        cowHit = false;
         // Accelerate the cow towards max speed
         if (speed < maxSpeed)
         {
