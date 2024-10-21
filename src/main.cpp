@@ -141,7 +141,11 @@ std::vector<glm::vec3> generateSpacedObjectPositions(int count, float range, flo
 
     while (positions.size() < count) {
         // Generate a new potential position
-        glm::vec3 newPosition(dist(gen), 0.0f, dist(gen));
+        float xRNG = dist(gen);
+        float xSpan = xRNG + ((xRNG / abs(xRNG)) * 5.0); // stop spawning 5 units left and right of origin (car position)
+        float zRNG = dist(gen);
+        float zSpan = zRNG + ((zRNG / abs(zRNG)) * 3.0); // stop spawning 3 units left and right of origin (car position)
+        glm::vec3 newPosition(xSpan, 0.0f, zSpan);
 
         // Check if the new position is valid (i.e., far enough from other positions)
         if (isPositionValid(newPosition, positions, minDistance)) {
