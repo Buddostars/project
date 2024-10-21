@@ -294,7 +294,7 @@ int main() {
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader objectShader2("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
-    Shader carShader("src/shaders/old_vertex_shader.vert", "src/shaders/old_fragment_shader.frag");
+    Shader carShader("src/shaders/car_vertex_shader.vert", "src/shaders/car_fragment_shader.frag");
     Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
 
     // Load models
@@ -422,7 +422,7 @@ int main() {
             setLightingAndObjectProperties(carShader);
 
 
-            cubemap.draw(carShader);  // Draw the cubemap
+            cubemap.draw(objectShader);  // Draw the cubemap
 
             // Draw the car model   
             car.draw(objectShader, -1);
@@ -454,10 +454,11 @@ int main() {
                 smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
                 smallRockkModel = glm::scale(smallRockkModel, glm::vec3(3.5f, 3.5f, 3.5f)); // Scale trees if necessary
                 
-                objectShader.setMat4("model", smallRockkModel);
-                objectShader.setMat4("view", view);
-                objectShader.setMat4("projection", projection);
-                small_rock.draw(objectShader); // Draw small rocks
+                carShader.setMat4("model", smallRockkModel);
+                carShader.setMat4("view", view);
+                carShader.setMat4("projection", projection);
+                carShader.setVec3("cameraPos", camera.position);
+                small_rock.draw(carShader, cubemap.getTextureID()); // Draw small rocks
             }
 
             for (const auto& position : bigRockPositions) {
@@ -479,10 +480,11 @@ int main() {
                 bigRockkModel = glm::translate(bigRockkModel, position); // Use fixed position
                 bigRockkModel = glm::scale(bigRockkModel, glm::vec3(1.5f, 1.5f, 1.5f)); // Scale trees if necessary
                 
-                objectShader.setMat4("model", bigRockkModel);
-                objectShader.setMat4("view", view);
-                objectShader.setMat4("projection", projection);
-                big_rock.draw(objectShader); // Draw big rocks
+                carShader.setMat4("model", bigRockkModel);
+                carShader.setMat4("view", view);
+                carShader.setMat4("projection", projection);
+                carShader.setVec3("cameraPos", camera.position);
+                big_rock.draw(carShader, cubemap.getTextureID()); // Draw big rocks
             }
 
            // Update the cow's position
@@ -499,7 +501,7 @@ int main() {
             objectShader.setMat4("projection", projection);
 
             // Render the cow
-            cow.draw(carShader, -1);
+            cow.draw(objectShader, -1);
 
             // Use a thread pool for giraffe updates
             std::vector<std::future<void>> futures;
