@@ -48,7 +48,7 @@ void ExhaustSystem::emitParticles(const glm::vec3& carPosition) {
 
 // Render the particles
 void ExhaustSystem::render(Shader& shader, const glm::mat4& view, const glm::mat4& projection) {
-    unsigned int smokeTextureID = loadTexture("src/smoke-img.png");
+    unsigned int smokeTextureID = loadTexture("src/smoke-img_trans.png");
 
     // Enable blending and disable depth writing
     glEnable(GL_BLEND);
