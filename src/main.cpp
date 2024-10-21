@@ -269,7 +269,7 @@ void renderEndGameScreen(Shader& quadShader, TextRenderer& textRenderer, int gam
 
     // Render "PLAY AGAIN" button as text
     float buttonScale = 1.5f;
-    std::string buttonText = "PLAY AGAIN";
+    std::string buttonText = "PLAYAGAIN_NIGHTMODE";
     float buttonWidth = textRenderer.CalculateTextWidth(buttonText, buttonScale);
     float buttonX = 512.0f - buttonWidth / 2.0f;
     float buttonY = 400.0f; // y-position of the button
