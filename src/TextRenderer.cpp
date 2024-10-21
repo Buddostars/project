@@ -134,10 +134,10 @@ void TextRenderer::LoadCharacters(float fontSize) {
         Characters.insert(std::pair<char, Character>(c, character));
 
         // Debug output
-        std::cout << "Loaded character '" << c << "': "
-                  << "Width=" << width << ", Height=" << height
-                  << ", BearingX=" << bearingX << ", BearingY=" << bearingY
-                  << ", Advance=" << advance << std::endl;
+        // std::cout << "Loaded character '" << c << "': "
+        //           << "Width=" << width << ", Height=" << height
+        //           << ", BearingX=" << bearingX << ", BearingY=" << bearingY
+        //           << ", Advance=" << advance << std::endl;
 
         // Free glyph bitmap
         stbtt_FreeBitmap(bitmap, NULL);
@@ -185,7 +185,8 @@ void TextRenderer::RenderText(const std::string& text, float x, float y, float s
     for (unsigned char c : text) {
         // Skip unsupported characters
         if (Characters.find(c) == Characters.end()) {
-            std::cout << "Character not found: " << c << std::endl;
+            // DEBUG
+            // std::cout << "Character not found: " << c << std::endl;
             continue;
         }
 

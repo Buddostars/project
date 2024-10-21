@@ -207,7 +207,7 @@ void processEndGameInput(GLFWwindow* window, Car& car, Cow_Character& cow, std::
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
-        ypos = 768.0 - ypos; // Invert Y coordinate
+        ypos = 818.0 - ypos; // Invert Y coordinate
 
         // Check if the click is within the button area
         if (xpos >= playAgainButton.x && xpos <= playAgainButton.x + playAgainButton.width &&
@@ -269,7 +269,7 @@ void renderEndGameScreen(Shader& quadShader, TextRenderer& textRenderer, int gam
 
     // Render "PLAY AGAIN" button as text
     float buttonScale = 1.5f;
-    std::string buttonText = "PLAYAGAIN_NIGHTMODE";
+    std::string buttonText = "PLAY_AGAIN_IN_NIGHT_MODE";
     float buttonWidth = textRenderer.CalculateTextWidth(buttonText, buttonScale);
     float buttonX = 512.0f - buttonWidth / 2.0f;
     float buttonY = 400.0f; // y-position of the button
@@ -506,7 +506,7 @@ int main() {
             gameTimeElapsed = currentTime - gameStartTime;
 
             // Check if 30 seconds have passed
-            if (gameTimeElapsed >= 5.0f) {
+            if (gameTimeElapsed >= 30.0f) {
                 currentState = STATE_END_GAME;
                 gameStarted = false;
                 std::cout << "Game over! Final Score: " << gameScore << std::endl;
