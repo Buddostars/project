@@ -115,9 +115,9 @@ Mesh Model:: processMesh(aiMesh *mesh, const aiScene *scene){
     return Mesh(vertices, indices, textures, mat);
 }
 
-void Model::draw(Shader& shader) {
+void Model::draw(Shader& shader, unsigned int cubemapTextureID) {
     for(unsigned int i = 0; i < meshes.size(); i++)
-        meshes[i].Draw(shader);
+        meshes[i].Draw(shader, cubemapTextureID);
 }
 
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName)

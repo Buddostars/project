@@ -274,9 +274,9 @@ float Cow_Character::getTotalRotationAngle()
     return totalRotationAngle;
 }
 
-void Cow_Character::draw(Shader &shader)
+void Cow_Character::draw(Shader &shader, unsigned int cubemapTextureID)
 {
-    cowModel.draw(shader); // Render the cow model
+    cowModel.draw(shader, cubemapTextureID); // Render the cow model
 }
 
 Hitbox Cow_Character::getHitbox() const

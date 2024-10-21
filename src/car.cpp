@@ -155,7 +155,7 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
 
 
 
-void Car::draw(Shader& shader) {
+void Car::draw(Shader& shader, unsigned int cubemapTextureID) {
     glm::mat4 carModelMatrix = glm::mat4(1.0f);
     carModelMatrix = glm::translate(carModelMatrix, position); // Position of car
 
@@ -166,7 +166,9 @@ void Car::draw(Shader& shader) {
     carModelMatrix = glm::scale(carModelMatrix, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale car if necessary
 
     shader.setMat4("model", carModelMatrix);
-    model.draw(shader);
+
+    // Draw the car model
+    model.draw(shader, cubemapTextureID);
 }
 
 glm::vec3 Car::getPosition() const {
