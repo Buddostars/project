@@ -386,13 +386,13 @@ void resetGame(Car& car, std::vector<Cow_Character>& cows, std::vector<Giraffe_C
     car.reset();
     
     // Reset cows
-    std::vector<glm::vec3> cowPositions = generateSpacedObjectPositions(50, 90.0f, 5.0f);
+    std::vector<glm::vec3> cowPositions = generateSpacedObjectPositions(10, 90.0f, 5.0f);
     for (size_t i = 0; i < cows.size(); ++i) {
         cows[i].reset(cowPositions[i]);
     }
 
     // Reset giraffes
-    std::vector<glm::vec3> positions = generateSpacedObjectPositions(200, 90.0f, 5.0f);
+    std::vector<glm::vec3> positions = generateSpacedObjectPositions(20, 90.0f, 5.0f);
     for (size_t i = 0; i < giraffes.size(); ++i) {
         giraffes[i].reset(positions[i]);
     }
@@ -429,14 +429,14 @@ int main() {
     Car car(carModel);
 
     std::vector<Cow_Character> cows;
-    for (const auto& position : generateSpacedObjectPositions(50, 90.0f, 5.0f)) {
+    for (const auto& position : generateSpacedObjectPositions(20, 90.0f, 5.0f)) {
         cows.emplace_back(cowModel, position);  // This will use the move constructor
         std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100 milliseconds
     }
 
     std::vector<Giraffe_Character> giraffes;
     glm::vec3 center(0.0f, 0.0f, -20.0f);
-    for (const auto& position : generateSpacedObjectPositions(200, 90.0f, 5.0f)) {
+    for (const auto& position : generateSpacedObjectPositions(50, 90.0f, 5.0f)) {
         giraffes.emplace_back(giraffeModel, position);  // This will use the move constructor
         std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100 milliseconds
     }
