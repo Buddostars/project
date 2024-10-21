@@ -303,7 +303,7 @@ int main() {
     Model tree("src/models/tree.obj");
     Model ground("src/models/ground.obj");
     Model carModel("src/models/car.obj");
-    Model cowModel("src/models/new_cow.obj");
+    Model cowModel("src/models/cow.obj");
     Model giraffeModel("src/models/new_giraffe.obj");
     
     // Create game objects
