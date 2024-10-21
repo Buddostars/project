@@ -352,17 +352,6 @@ int main() {
         std::cout << "Loading screen texture loaded successfully. ID: " << loadingScreenTexture << std::endl;
     }
 
-    
-
-    // // Set light properties
-    // glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
-    // glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
-    // glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
-    // glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
-    // glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
-
-    // Initialize model position
-    glm::vec3 modelPosition(0.0f, 0.0f, 0.0f);
 
     // game logic checks
     bool doOnce = true;
@@ -425,24 +414,7 @@ int main() {
             objectShader.setMat4("view", view);
             objectShader.setMat4("projection", projection);
             ground.draw(objectShader); // Draw ground
-            
-            //Draw the tree model using fixed positions
-            for (const auto& position : treePositions) {
-                Hitbox treeHitBox = tree.calculateHitbox();
-                treeHitBox.minCorner += position;
-                treeHitBox.maxCorner += position;
-                environmentHitboxes.push_back(treeHitBox);
-            
-                glm::mat4 treeModel = glm::mat4(1.0f);
-                treeModel = glm::translate(treeModel, position); // Use fixed position
-                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
-                
-                objectShader.setMat4("model", treeModel);
-                objectShader.setMat4("view", view);
-                objectShader.setMat4("projection", projection);
-                tree.draw(objectShader); // Draw tree
-            }
-
+           
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
                 Hitbox smallRockHitBox = small_rock.calculateHitbox();
