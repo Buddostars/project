@@ -62,7 +62,6 @@ void Mesh::Draw(Shader &shader, unsigned int cubemapTextureID)
 
     // Setting cubemap texture if it exists
     if (cubemapTextureID != -1) {
-        printf("Using cubemap texture\n");
         shader.setInt("cubemapTexture", textures.size()); // Bind to next texture unit
         shader.setBool("useCubemap", true);
         glActiveTexture(GL_TEXTURE0 + textures.size());
