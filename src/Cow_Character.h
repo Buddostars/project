@@ -2,17 +2,29 @@
 #define COW_CHARACTER_H
 
 #include <glm/glm.hpp>
+#include <mutex>
+#include <random>
 #include "model.hpp"
 #include "hitbox.hpp"
 
 class Cow_Character {
 public:
     Cow_Character(Model& model);
+    Cow_Character(Model& model, glm::vec3 position);
+
+    // Disable copy constructor and copy assignment operator
+    Cow_Character(const Cow_Character&) = delete;
+    Cow_Character& operator=(const Cow_Character&) = delete;
+
+    // Enable move constructor and move assignment operator (custom ones)
+    Cow_Character(Cow_Character&& other) noexcept;
+    Cow_Character& operator=(Cow_Character&& other) noexcept;
 
     glm::vec3 getPosition();  // Returns the cow's current position
     float getTotalRotationAngle();
     Hitbox getHitbox() const; // Returns the cow's hitbox for collision detection
     float getSpeed() const;
+    bool getCowHit() const;
     
     void gameHit(glm::vec3 hitDirection, float carSpeed);  // Add knockback logic
     void moveRandomly(float deltaTime, const std::vector<Hitbox>& environmentHitboxes, const std::vector<Hitbox>& wallHitboxes );  // Updates the cow's position randomly based on deltaTime
@@ -41,11 +53,18 @@ private:
     float stopDuration;       // The duration for which the cow will stop
     float timeStopped;        // How long the cow has been stopped
 
-    void stopAndRotate();     // Function to handle stopping and rotating
+    // multithreading and rng variables
+    std::mutex cowMutex;
+    std::mt19937 rng;  // Mersenne Twister random number generator
+    std::uniform_real_distribution<float> rotationDist;  // Distribution for rotation angles
+    
     Model& cowModel;          // The cow's 3D model
+    bool cowHit;
 
     // Hitbox for collision detection
     Hitbox hitbox;
+
+    void stopAndRotate();     // Function to handle stopping and rotating
 };
 
 #endif

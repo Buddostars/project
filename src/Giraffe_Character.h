@@ -9,7 +9,7 @@
 
 class Giraffe_Character {
 public:
-Giraffe_Character(Model& model);
+    Giraffe_Character(Model& model);
     Giraffe_Character(Model& model, glm::vec3 position);
 
     // Disable copy constructor and copy assignment operator

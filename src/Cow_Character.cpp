@@ -15,8 +15,47 @@ Cow_Character::Cow_Character(Model &model)
     // Initialize cow position, direction, and movement state
 }
 
+Cow_Character::Cow_Character(Model& model, glm::vec3 position)
+    : cowModel(model), position(position), direction(0.0f, 0.0f, -1.0f), distanceTraveled(0.0f), moving(true),
+      rotationAngle(180.0f), stopDuration(0.0f), timeStopped(0.0f), velocity(0.0f), maxSpeed(20.0f),
+      acceleration(1.0f), deceleration(3.0f), totalRotationAngle(0.0f), cowHit(false),
+      rng(std::chrono::high_resolution_clock::now().time_since_epoch().count()),
+      rotationDist(-15.0f, 15.0f),  // Set up the random distribution for rotation angles
+      hitbox(cowModel.calculateHitbox()) {
+    // Initialize cow position, direction, and movement state
+}
+
+// Move constructor
+Cow_Character::Cow_Character(Cow_Character&& other) noexcept
+    : cowModel(other.cowModel), 
+      position(std::move(other.position)),
+      // Move other necessary fields...
+      velocity(std::move(other.velocity)),
+      maxSpeed(other.maxSpeed),
+      acceleration(other.acceleration),
+      totalRotationAngle(other.totalRotationAngle) {
+    // No need to move the mutex as it’s not copyable; it’s re-initialized
+}
+
+// Move assignment operator
+Cow_Character& Cow_Character::operator=(Cow_Character&& other) noexcept {
+    if (this != &other) {
+        // Move the model reference and other members
+        cowModel = other.cowModel;
+        position = std::move(other.position);
+        velocity = std::move(other.velocity);
+        maxSpeed = other.maxSpeed;
+        acceleration = other.acceleration;
+        totalRotationAngle = other.totalRotationAngle;
+        // Reinitialize the mutex instead of moving it
+    }
+    return *this;
+}
+
 void Cow_Character::moveRandomly(float deltaTime, const std::vector<Hitbox> &environmentHitboxes, const std::vector<Hitbox> &wallHitboxes)
 {
+    std::lock_guard<std::mutex> lock(cowMutex);
+
     // If cow is knocked back, gradually reduce velocity
     if (glm::length2(velocity) > 0.0f)
     {                                              // Check if velocity is non-zero
@@ -266,6 +305,7 @@ void Cow_Character::stopAndRotate()
 
 glm::vec3 Cow_Character::getPosition()
 {
+    std::lock_guard<std::mutex> lock(cowMutex);
     return position;
 }
 
@@ -288,6 +328,10 @@ float Cow_Character::getSpeed() const{
     return speed;
 }
 
+bool Cow_Character::getCowHit() const {
+    return cowHit;
+}
+
 // Knockback logic
 void Cow_Character::gameHit(glm::vec3 hitDirection, float carSpeed)
 {
@@ -299,9 +343,12 @@ void Cow_Character::gameHit(glm::vec3 hitDirection, float carSpeed)
     velocity = knockbackVelocity;
 
     std::cout << "Cow hit! Knockback velocity: " << velocity.x << ", " << velocity.y << ", " << velocity.z << std::endl;
+
+    cowHit = true;
 }
 
 void Cow_Character::reset() {
+    std::lock_guard<std::mutex> lock(cowMutex);
     position = glm::vec3(0.0f, 0.0f, -10.0f);
     direction = glm::vec3(0.0f, 0.0f, 1.0f);
     distanceTraveled = 0.0f;

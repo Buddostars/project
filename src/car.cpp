@@ -187,7 +187,7 @@ Hitbox Car::getHitbox() const {
 
 void Car::gameHit() {
     std::cout << "Car and cow collided!" << std::endl;
-    speed = -10.0f;
+    speed = speed * 0.5;
 }
 
 void Car::reset() {

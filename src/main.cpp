@@ -387,7 +387,7 @@ void resetGame(Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& gir
 
     // Reset giraffes
     glm::vec3 center(0.0f, 0.0f, -20.0f);
-    std::vector<glm::vec3> positions = generateBowlingPinPositions(center);
+    std::vector<glm::vec3> positions = generateSpacedObjectPositions(50, 90.0f, 5.0f);
     for (size_t i = 0; i < giraffes.size(); ++i) {
         giraffes[i].reset(positions[i]);
     }
@@ -421,11 +421,16 @@ int main() {
     glm::vec3 groundMax = groundHitbox.maxCorner;
 
     Car car(carModel);
-    Cow_Character cow(cowModel);
+
+    std::vector<Cow_Character> cows;
+    for (const auto& position : generateSpacedObjectPositions(50, 90.0f, 5.0f)) {
+        cows.emplace_back(cowModel, position);  // This will use the move constructor
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100 milliseconds
+    }
 
     std::vector<Giraffe_Character> giraffes;
     glm::vec3 center(0.0f, 0.0f, -20.0f);
-    for (const auto& position : generateBowlingPinPositions(center)) {
+    for (const auto& position : generateSpacedObjectPositions(200, 90.0f, 5.0f)) {
         giraffes.emplace_back(giraffeModel, position);  // This will use the move constructor
         std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100 milliseconds
     }
@@ -593,33 +598,60 @@ int main() {
                 big_rock.draw(objectShader); // Draw big rocks
             }
 
-           // Update the cow's position
-            cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
+        //    // Update the cow's position
+        //     cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
 
-            glm::mat4 cowModelMatrix = glm::mat4(1.0f);
-            cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
-            cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
-            cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
+        //     glm::mat4 cowModelMatrix = glm::mat4(1.0f);
+        //     cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
+        //     cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
+        //     cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
 
-            // Pass the updated matrices to the shader
-            objectShader.setMat4("model", cowModelMatrix);
-            objectShader.setMat4("view", view);
-            objectShader.setMat4("projection", projection);
+        //     // Pass the updated matrices to the shader
+        //     objectShader.setMat4("model", cowModelMatrix);
+        //     objectShader.setMat4("view", view);
+        //     objectShader.setMat4("projection", projection);
 
-            // Render the cow
-            cow.draw(objectShader);
+        //     // Render the cow
+        //     cow.draw(objectShader);
+
+            // Use a thread pool for cow updates
+            std::vector<std::future<void>> cowFutures;
+            
+            for (auto& cow : cows) {
+                cowFutures.push_back(std::async(std::launch::async, [&cow, deltaTime, &environmentHitboxes]() {
+                    cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
+                }));
+            }
+
+            // Wait for all cow to finish updating
+            for (auto& future : cowFutures) {
+                future.get();  // Ensure all updates are complete
+            }
+
+            // Render the cow after movement updates
+            for (auto& cow : cows) {
+                glm::mat4 cowModelMatrix = glm::mat4(1.0f);
+                cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
+                cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
+                cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
+
+                objectShader.setMat4("model", cowModelMatrix);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+                cow.draw(objectShader);
+            }
 
             // Use a thread pool for giraffe updates
-            std::vector<std::future<void>> futures;
+            std::vector<std::future<void>> giraffeFutures;
             
             for (auto& giraffe : giraffes) {
-                futures.push_back(std::async(std::launch::async, [&giraffe, deltaTime]() {
+                giraffeFutures.push_back(std::async(std::launch::async, [&giraffe, deltaTime]() {
                     giraffe.moveRandomly(deltaTime);
                 }));
             }
 
             // Wait for all giraffes to finish updating
-            for (auto& future : futures) {
+            for (auto& future : giraffeFutures) {
                 future.get();  // Ensure all updates are complete
             }
 
@@ -637,22 +669,19 @@ int main() {
             }
 
 
-            // Check for collisions between the car and the cow
-            if (car.getHitbox().isColliding(cow.getHitbox())) {
-                
-                // prevent multiple knockback force if there is still collision on next frames
-                if (doOnce) { 
-                    glm::vec3 hitDirection = cow.getPosition() - car.getPosition();
-                    cow.gameHit(hitDirection, car.getSpeed());  // Pass car speed and direction to apply knockback
-                    car.gameHit();
-                    // doOnce = false; //commented out to allow multiple chances to hit giraffes with cow
-                    cowInflated = true;
+            // Check for collisions between the car and the cows
+            for (auto& cow : cows) {
+                if (car.getHitbox().isColliding(cow.getHitbox())) {
+                    // prevent multiple knockback force if there is still collision on next frames
+                    if (doOnce) {
+                        glm::vec3 hitDirection = cow.getPosition() - car.getPosition();
+                        cow.gameHit(hitDirection, car.getSpeed());  // Pass car speed and direction to apply knockback
+                        car.gameHit();
+                    }
                 }
-            }
 
-            if (cowInflated) {
                 for (auto& giraffe : giraffes) {
-                    if (cow.getHitbox().isColliding(giraffe.getHitbox())) {
+                    if (cow.getHitbox().isColliding(giraffe.getHitbox()) && cow.getCowHit()) {
                         glm::vec3 hitDirection = giraffe.getPosition() - cow.getPosition();
                         giraffe.gameHit(hitDirection, cow.getSpeed(), deltaTime, gameScore);
 
@@ -662,6 +691,7 @@ int main() {
                     }
                     giraffe.update(deltaTime);
                 }
+
             }
 
             // Check for collisions between the car and the environment
@@ -689,7 +719,7 @@ int main() {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
             // Process end game input
-            processEndGameInput(window, car, cow, giraffes, carModel, cowModel, giraffeModel);
+            //processEndGameInput(window, car, cow, giraffes, carModel, cowModel, giraffeModel);
 
             // Render the end game screen
             renderEndGameScreen(quadShader, textRenderer, gameScore);
