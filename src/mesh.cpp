@@ -36,14 +36,13 @@ void Mesh::setupMesh() {
     glBindVertexArray(0);
 }
 
-void Mesh::Draw(Shader &shader) 
+void Mesh::Draw(Shader &shader, unsigned int cubemapTextureID) 
 {
     unsigned int diffuseNr = 1;
     unsigned int specularNr = 1;
     for(unsigned int i = 0; i < textures.size(); i++)
     {
         glActiveTexture(GL_TEXTURE0 + i); // activate proper texture unit before binding
-        // retrieve texture number (the N in diffuse_textureN)
         std::string number;
         std::string name = textures[i].type;
         if(name == "texture_diffuse")
@@ -60,11 +59,21 @@ void Mesh::Draw(Shader &shader)
     shader.setVec3("material.diffuse", material.diffuse);
     shader.setVec3("material.specular", material.specular);
     shader.setFloat("material.shininess", material.shininess);
-    
+
+    // Setting cubemap texture if it exists
+    if (cubemapTextureID != -1) {
+        shader.setInt("cubemapTexture", textures.size()); // Bind to next texture unit
+        shader.setBool("useCubemap", true);
+        glActiveTexture(GL_TEXTURE0 + textures.size());
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTextureID);
+    } else {
+        shader.setBool("useCubemap", false);
+    }
+
     glActiveTexture(GL_TEXTURE0);
 
-    // draw mesh
+    // Draw mesh
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-}  
+}
