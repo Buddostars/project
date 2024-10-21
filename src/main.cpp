@@ -411,15 +411,12 @@ int main() {
 
             shaderProgram.use();
             objectShader.use();
-            objectShader2.use();
-            carShader.use();
             //shaderProgram.setSampler("texture_diffuse", 0);
 
             glm::mat4 view = camera.getViewMatrix();
             glm::mat4 projection = camera.getProjectionMatrix();
             setLightingAndObjectProperties(shaderProgram);
             setLightingAndObjectProperties(objectShader);
-            setLightingAndObjectProperties(carShader);
 
 
             cubemap.draw(objectShader);  // Draw the cubemap
@@ -434,7 +431,54 @@ int main() {
             objectShader.setMat4("view", view);
             objectShader.setMat4("projection", projection);
             ground.draw(objectShader); // Draw ground
-           
+
+            // Update the cow's position
+            cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
+
+            glm::mat4 cowModelMatrix = glm::mat4(1.0f);
+            cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
+            cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
+            cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
+
+            // Pass the updated matrices to the shader
+            objectShader.setMat4("model", cowModelMatrix);
+            objectShader.setMat4("view", view);
+            objectShader.setMat4("projection", projection);
+
+            // Render the cow
+            cow.draw(objectShader, -1);
+
+            // Use a thread pool for giraffe updates
+            std::vector<std::future<void>> futures;
+            
+            for (auto& giraffe : giraffes) {
+                futures.push_back(std::async(std::launch::async, [&giraffe, deltaTime]() {
+                    giraffe.moveRandomly(deltaTime);
+                }));
+            }
+
+            // Wait for all giraffes to finish updating
+            for (auto& future : futures) {
+                future.get();  // Ensure all updates are complete
+            }
+            
+            objectShader2.use();
+            // Render the giraffes after movement updates
+            for (auto& giraffe : giraffes) {
+                glm::mat4 giraffeModelMatrix = glm::mat4(1.0f);
+                giraffeModelMatrix = glm::translate(giraffeModelMatrix, giraffe.getPosition());
+                giraffeModelMatrix = glm::rotate(giraffeModelMatrix, glm::radians(giraffe.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
+                giraffeModelMatrix = glm::scale(giraffeModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
+
+                objectShader2.setMat4("model", giraffeModelMatrix);
+                objectShader2.setMat4("view", view);
+                objectShader2.setMat4("projection", projection);
+                giraffe.draw(objectShader2);
+            }
+
+            carShader.use();
+            setLightingAndObjectProperties(carShader);
+
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
                 Hitbox smallRockHitBox = small_rock.calculateHitbox();
@@ -485,49 +529,6 @@ int main() {
                 carShader.setMat4("projection", projection);
                 carShader.setVec3("cameraPos", camera.position);
                 big_rock.draw(carShader, cubemap.getTextureID()); // Draw big rocks
-            }
-
-           // Update the cow's position
-            cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
-
-            glm::mat4 cowModelMatrix = glm::mat4(1.0f);
-            cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
-            cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
-            cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
-
-            // Pass the updated matrices to the shader
-            objectShader.setMat4("model", cowModelMatrix);
-            objectShader.setMat4("view", view);
-            objectShader.setMat4("projection", projection);
-
-            // Render the cow
-            cow.draw(objectShader, -1);
-
-            // Use a thread pool for giraffe updates
-            std::vector<std::future<void>> futures;
-            
-            for (auto& giraffe : giraffes) {
-                futures.push_back(std::async(std::launch::async, [&giraffe, deltaTime]() {
-                    giraffe.moveRandomly(deltaTime);
-                }));
-            }
-
-            // Wait for all giraffes to finish updating
-            for (auto& future : futures) {
-                future.get();  // Ensure all updates are complete
-            }
-
-            // Render the giraffes after movement updates
-            for (auto& giraffe : giraffes) {
-                glm::mat4 giraffeModelMatrix = glm::mat4(1.0f);
-                giraffeModelMatrix = glm::translate(giraffeModelMatrix, giraffe.getPosition());
-                giraffeModelMatrix = glm::rotate(giraffeModelMatrix, glm::radians(giraffe.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
-                giraffeModelMatrix = glm::scale(giraffeModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
-
-                objectShader2.setMat4("model", giraffeModelMatrix);
-                objectShader2.setMat4("view", view);
-                objectShader2.setMat4("projection", projection);
-                giraffe.draw(objectShader2);
             }
 
             // Render smoke particles
