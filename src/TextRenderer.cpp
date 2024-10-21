@@ -6,12 +6,13 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "../dependencies/include/stb_truetype.h"
 
-// Constructor
-TextRenderer::TextRenderer(const char* fontFilePath, Shader& shader) : textShader(shader) {
+// Constructor with fontSize parameter
+TextRenderer::TextRenderer(const char* fontFilePath, Shader& shader, float fontSize) 
+    : textShader(shader) {
     if (!LoadFont(fontFilePath)) {
         std::cerr << "Failed to load font: " << fontFilePath << std::endl;
     } else {
-        LoadCharacters();
+        LoadCharacters(fontSize);
         SetupRenderData();
     }
 }
@@ -50,9 +51,9 @@ bool TextRenderer::LoadFont(const char* fontFilePath) {
     }
     fontFile.close();
 
-    // Initialize font
+    // Initialise font
     if (!stbtt_InitFont(&font, fontBuffer, stbtt_GetFontOffsetForIndex(fontBuffer, 0))) {
-        std::cerr << "Failed to initialize font" << std::endl;
+        std::cerr << "Failed to initialise font" << std::endl;
         delete[] fontBuffer;
         return false;
     }
@@ -60,30 +61,37 @@ bool TextRenderer::LoadFont(const char* fontFilePath) {
     return true;
 }
 
-// Load character glyphs
-void TextRenderer::LoadCharacters() {
+// Load character glyphs with fontSize
+void TextRenderer::LoadCharacters(float fontSize) {
     // Clear previous characters
     Characters.clear();
 
-    // Font size
-    float fontSize = 24.0f;
+    // Calculate scale based on font size
     float scale = stbtt_ScaleForPixelHeight(&font, fontSize);
 
     int ascent, descent, lineGap;
     stbtt_GetFontVMetrics(&font, &ascent, &descent, &lineGap);
 
-    ascent = roundf(ascent * scale);
-    descent = roundf(descent * scale);
+    float ascent_scaled = ascent * scale;
+    float descent_scaled = descent * scale;
 
     for (unsigned char c = 32; c < 128; c++) {
         // Load character glyph
         int width, height, xoff, yoff;
         unsigned char* bitmap = stbtt_GetCodepointBitmap(&font, 0, scale, c, &width, &height, &xoff, &yoff);
 
+        if (width == 0 || height == 0) {
+            stbtt_FreeBitmap(bitmap, NULL);
+            continue;
+        }
+
         // Generate texture
         GLuint texture;
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
+
+        // Ensure that pixel rows are tightly packed
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         // Set texture options
         glTexImage2D(
@@ -111,20 +119,30 @@ void TextRenderer::LoadCharacters() {
         float advance = advanceWidth * scale;
         float bearingX = leftSideBearing * scale;
 
+        // Get vertical metrics
+        int x0, y0, x1, y1;
+        stbtt_GetCodepointBitmapBox(&font, c, scale, scale, &x0, &y0, &x1, &y1);
+        float bearingY = y1 * scale;
+
         // Now store character for later use
         Character character = {
             texture,
             glm::ivec2(width, height),
-            glm::vec2(bearingX, yoff), // yoff is already in pixels
+            glm::vec2(bearingX, bearingY),
             advance
         };
         Characters.insert(std::pair<char, Character>(c, character));
+
+        // Debug output
+        std::cout << "Loaded character '" << c << "': "
+                  << "Width=" << width << ", Height=" << height
+                  << ", BearingX=" << bearingX << ", BearingY=" << bearingY
+                  << ", Advance=" << advance << std::endl;
 
         // Free glyph bitmap
         stbtt_FreeBitmap(bitmap, NULL);
     }
 }
-
 
 // Configure VAO/VBO for texture quads
 void TextRenderer::SetupRenderData() {
@@ -160,12 +178,21 @@ void TextRenderer::RenderText(const std::string& text, float x, float y, float s
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    // Disable depth testing for text rendering
+    glDisable(GL_DEPTH_TEST);
+
     // Iterate through all characters in the string
-    for (char c : text) {
+    for (unsigned char c : text) {
+        // Skip unsupported characters
+        if (Characters.find(c) == Characters.end()) {
+            std::cout << "Character not found: " << c << std::endl;
+            continue;
+        }
+
         Character ch = Characters[c];
 
         float xpos = x + ch.Bearing.x * scale;
-        float ypos = y - (ch.Bearing.y * scale);
+        float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
 
         float w = ch.Size.x * scale;
         float h = ch.Size.y * scale;
@@ -200,21 +227,21 @@ void TextRenderer::RenderText(const std::string& text, float x, float y, float s
 
     // Disable blending after rendering
     glDisable(GL_BLEND);
+
+    // Re-enable depth testing
+    glEnable(GL_DEPTH_TEST);
 }
-
-
-
 
 // Calculate the width of the text string
 float TextRenderer::CalculateTextWidth(const std::string& text, float scale) {
     float width = 0.0f;
-    for (char c : text) {
+    for (unsigned char c : text) {
+        if (Characters.find(c) == Characters.end()) continue;
         Character ch = Characters[c];
         width += ch.Advance * scale;
     }
     return width;
 }
-
 
 void TextRenderer::SetProjection(glm::mat4 projection) {
     textShader.use();

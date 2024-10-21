@@ -10,14 +10,14 @@
 struct Character {
     GLuint TextureID;   // ID handle of the glyph texture
     glm::ivec2 Size;    // Size of glyph
-    glm::ivec2 Bearing; // Offset from baseline to left/top of glyph
-    float Advance;     // Offset to advance to next glyph
+    glm::vec2 Bearing;  // Offset from baseline to left/top of glyph
+    float Advance;      // Offset to advance to next glyph
 };
 
 class TextRenderer {
 public:
-    // Constructor
-    TextRenderer(const char* fontFilePath, Shader& shader);
+    // Constructor with fontSize parameter
+    TextRenderer(const char* fontFilePath, Shader& shader, float fontSize = 24.0f);
 
     // Destructor
     ~TextRenderer();
@@ -38,7 +38,7 @@ private:
     // Shader for rendering text
     Shader& textShader;
 
-    // Holds all state information relevant to a character as loaded using FreeType
+    // Holds all state information relevant to a character as loaded using stb_truetype
     std::map<char, Character> Characters;
 
     // Render state
@@ -51,8 +51,8 @@ private:
     // Load font from file
     bool LoadFont(const char* fontFilePath);
 
-    // Load character glyphs
-    void LoadCharacters();
+    // Load character glyphs with fontSize
+    void LoadCharacters(float fontSize);
 
     // Configure VAO/VBO for texture quads
     void SetupRenderData();

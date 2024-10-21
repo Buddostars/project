@@ -17,6 +17,8 @@
 #include <iostream>
 #include <stb_image.h>
 #include <future>
+#include <sstream>
+#include <iomanip>
 
 #include "shader.h"
 #include "controls.hpp"
@@ -27,6 +29,7 @@
 #include "Cow_Character.h"
 #include "Giraffe_Character.h"
 #include "ExhaustSystem.h"
+#include "TextRenderer.h"   // To show the game score
 
 // Define the GameState enum before using it
 enum GameState {
@@ -339,6 +342,7 @@ int main() {
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader objectShader2("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
+    Shader textShader("src/shaders/text_shader.vert", "src/shaders/text_shader.frag");
 
     // Load models
     Model big_rock("src/models/big_rock.obj");
@@ -407,6 +411,16 @@ int main() {
 
     // Initialize the walls around the map
     initializeWallsFromGround(groundHitbox);
+
+    // Print the working directory
+    std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
+
+    // Initialise Text Renderer
+    TextRenderer textRenderer("src/fonts/arial.ttf", textShader, 30.0f);
+
+    // Set up projection matrix for text rendering
+    glm::mat4 textProjection = glm::ortho(0.0f, static_cast<float>(1024), 0.0f, static_cast<float>(768));
+    textRenderer.SetProjection(textProjection);
 
     // Main loop
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
@@ -604,7 +618,20 @@ int main() {
                     std::cout << "Car and environment collided!" << std::endl;
                 }
             }
+
+            // Render the score at the top left
+            std::string scoreText = "SCORE: " + std::to_string(gameScore);
+            textRenderer.RenderText(scoreText, 25.0f, 725.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // White color
+
+            // Render the remaining time at the top right
+            // std::string timeText = "TIME: " + std::to_string(30 - gameTimeElapsed);
+            // textRenderer.RenderText(timeText, 875.0f, 725.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
             
+            std::stringstream stream;
+            stream << std::fixed << std::setprecision(2) << (30.0f - gameTimeElapsed);
+            std::string timeText = "TIME: " + stream.str();
+            textRenderer.RenderText(timeText, 875.0f, 725.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // White color
+
         } else if (currentState == STATE_END_GAME) {
             // Show the cursor in the end game menu
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -614,6 +641,12 @@ int main() {
 
             // Render the end game screen
             renderEndGameScreen(quadShader);
+
+            // Optionally, render the final score
+            // textRenderer.Use(); // Activate the text shader
+            // std::string finalScoreText = "Final Score: " + std::to_string(gameScore);
+            // float finalScoreWidth = textRenderer.CalculateTextWidth(finalScoreText, 1.0f);
+            // textRenderer.RenderText(finalScoreText, 512.0f - finalScoreWidth / 2.0f, 400.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // Centered
         }
 
         glfwSwapBuffers(window);
