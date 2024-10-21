@@ -407,7 +407,7 @@ int main() {
     Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
-    Shader objectShader2("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
+    //Shader objectShader2("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader reflectionShader("src/shaders/reflection_vertex_shader.vert", "src/shaders/reflection_fragment_shader.frag");
     Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
     Shader textShader("src/shaders/text_shader.vert", "src/shaders/text_shader.frag");
@@ -628,7 +628,7 @@ int main() {
                 future.get();  // Ensure all updates are complete
             }
             
-            objectShader2.use();
+            //objectShader2.use();
             // Render the giraffes after movement updates
             for (auto& giraffe : giraffes) {
                 glm::mat4 giraffeModelMatrix = glm::mat4(1.0f);
@@ -636,10 +636,10 @@ int main() {
                 giraffeModelMatrix = glm::rotate(giraffeModelMatrix, glm::radians(giraffe.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
                 giraffeModelMatrix = glm::scale(giraffeModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
 
-                objectShader2.setMat4("model", giraffeModelMatrix);
-                objectShader2.setMat4("view", view);
-                objectShader2.setMat4("projection", projection);
-                giraffe.draw(objectShader2);
+                objectShader.setMat4("model", giraffeModelMatrix);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+                giraffe.draw(objectShader);
             }
 
             reflectionShader.use();
