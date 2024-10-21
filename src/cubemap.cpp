@@ -2,7 +2,7 @@
 
 Cubemap::Cubemap(std::vector<std::string> faces) {
     textureID = loadCubemap(faces);
-    printf("Cubemap texture ID: %d\n", textureID);
+    //printfCubemap texture ID: %d\n", textureID);
 }
 
 unsigned int Cubemap::loadCubemap(std::vector<std::string> faces) {
