@@ -294,7 +294,7 @@ int main() {
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
     Shader objectShader2("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
-    Shader reflectionShader("src/shaders/car_vertex_shader.vert", "src/shaders/car_fragment_shader.frag");
+    Shader reflectionShader("src/shaders/reflection_vertex_shader.vert", "src/shaders/reflection_fragment_shader.frag");
     Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
 
     // Load models
