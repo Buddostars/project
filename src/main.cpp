@@ -49,11 +49,25 @@ float gameTimeElapsed = 0.0f;
 int gameScore = 0;
 bool gameStarted = false;
 
+// Game logic variables
+bool doOnce = true;
+bool cowInflated = false;
+
 struct Vec3Hash {
     std::size_t operator()(const glm::vec3& v) const {
         return std::hash<float>()(v.x) ^ std::hash<float>()(v.y) ^ std::hash<float>()(v.z);
     }
 };
+
+// Define a struct for the "PLAY AGAIN" button
+struct Button {
+    float x;
+    float y;
+    float width;
+    float height;
+};
+
+Button playAgainButton; // Global variable for the "PLAY AGAIN" button
 
 // Function to initialize GLFW
 GLFWwindow* initializeWindow() {
@@ -159,7 +173,6 @@ std::vector<glm::vec3> generateBowlingPinPositions(glm::vec3 center) {
     positions.push_back(center + glm::vec3(-0.5f, 0.0f, -1.0f));
     positions.push_back(center + glm::vec3(0.5f, 0.0f, -1.0f));
     positions.push_back(center + glm::vec3(1.5f, 0.0f, -1.0f));
-    
 
     return positions;
 }
@@ -169,8 +182,11 @@ unsigned int loadingScreenTexture;
 
 // Function declarations
 void processMenuInput(GLFWwindow* window);
+void processEndGameInput(GLFWwindow* window, Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel);
 void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader);
+void renderEndGameScreen(Shader& quadShader, TextRenderer& textRenderer, int gameScore);
 void renderQuad(float x, float y, float width, float height);
+void resetGame(Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel);
 
 // Function: processMenuInput
 void processMenuInput(GLFWwindow* window) {
@@ -186,17 +202,18 @@ void processMenuInput(GLFWwindow* window) {
 }
 
 // Function to process input in the end game state
-void processEndGameInput(GLFWwindow* window) {
-    // Detect when the user clicks "Restart" and change to the game state
+void processEndGameInput(GLFWwindow* window, Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel) {
+    // Detect when the user clicks "PLAY AGAIN" and reset the game
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
         ypos = 768.0 - ypos; // Invert Y coordinate
-        if (xpos >= 337.0 && xpos <= 687.0 && ypos >= 430.0 && ypos <= 500.0) {
-            currentState = STATE_GAME;
-            gameScore = 0;
-            gameStartTime = glfwGetTime();
-            gameStarted = true;
+
+        // Check if the click is within the button area
+        if (xpos >= playAgainButton.x && xpos <= playAgainButton.x + playAgainButton.width &&
+            ypos >= playAgainButton.y && ypos <= playAgainButton.y + playAgainButton.height) {
+            resetGame(car, cow, giraffes, carModel, cowModel, giraffeModel);
+            currentState = STATE_MENU;
         }
     }
 }
@@ -226,7 +243,9 @@ void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader) {
 }
 
 // Function to render the end game screen
-void renderEndGameScreen(Shader& quadShader) {
+void renderEndGameScreen(Shader& quadShader, TextRenderer& textRenderer, int gameScore) {
+    // Set clear color to black
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Disable depth testing so 2D elements are rendered on top
@@ -234,16 +253,35 @@ void renderEndGameScreen(Shader& quadShader) {
 
     // Set up orthographic projection for 2D rendering
     glm::mat4 projection = glm::ortho(0.0f, 1024.0f, 0.0f, 768.0f);
-    quadShader.use();
-    quadShader.setMat4("projection", projection);
 
-    // Bind the background texture (you can use the same or different texture)
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, loadingScreenTexture);
-    quadShader.setInt("texture1", 0);
+    // Render "GAME OVER" text
+    textRenderer.SetProjection(projection);
+    float gameOverScale = 2.0f;
+    std::string gameOverText = "GAME OVER";
+    float gameOverWidth = textRenderer.CalculateTextWidth(gameOverText, gameOverScale);
+    textRenderer.RenderText(gameOverText, 512.0f - gameOverWidth / 2.0f, 600.0f, gameOverScale, glm::vec3(1.0f));
 
-    // Render the quad for the background
-    renderQuad(0.0f, 0.0f, 1024.0f, 768.0f); // Full-screen background quad
+    // Render "SCORE: X" text
+    float scoreScale = 1.5f;
+    std::string scoreText = "SCORE: " + std::to_string(gameScore);
+    float scoreWidth = textRenderer.CalculateTextWidth(scoreText, scoreScale);
+    textRenderer.RenderText(scoreText, 512.0f - scoreWidth / 2.0f, 500.0f, scoreScale, glm::vec3(1.0f));
+
+    // Render "PLAY AGAIN" button as text
+    float buttonScale = 1.5f;
+    std::string buttonText = "PLAY AGAIN";
+    float buttonWidth = textRenderer.CalculateTextWidth(buttonText, buttonScale);
+    float buttonX = 512.0f - buttonWidth / 2.0f;
+    float buttonY = 400.0f; // y-position of the button
+    float buttonHeight = 50.0f; // approximate height of the text, adjust as needed
+
+    // Store the button area in the global variable
+    playAgainButton.x = buttonX;
+    playAgainButton.y = buttonY;
+    playAgainButton.width = buttonWidth;
+    playAgainButton.height = buttonHeight;
+
+    textRenderer.RenderText(buttonText, buttonX, buttonY, buttonScale, glm::vec3(1.0f));
 
     // Re-enable depth testing
     glEnable(GL_DEPTH_TEST);
@@ -292,8 +330,9 @@ void renderQuad(float x, float y, float width, float height) {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+
 // Hitbox for the walls around map
-    std::vector<Hitbox> wallHitboxes;
+std::vector<Hitbox> wallHitboxes;
 
 void initializeWallsFromGround(const Hitbox& groundHitbox) {
     glm::vec3 groundMin = groundHitbox.minCorner;
@@ -320,15 +359,37 @@ void initializeWallsFromGround(const Hitbox& groundHitbox) {
     std::cout << "Front Wall Min: " << frontWallMin.x << ", " << frontWallMin.y << ", " << frontWallMin.z << std::endl;
     std::cout << "Front Wall Max: " << frontWallMax.x << ", " << frontWallMax.y << ", " << frontWallMax.z << std::endl;
 
-
     // Create Back Wall(south)
     glm::vec3 backWallMin = glm::vec3(groundMin.x, 0.0f, groundMin.z);
     glm::vec3 backWallMax = glm::vec3(groundMax.x, 5.0f, groundMin.z + 1.0f);
     wallHitboxes.push_back(Hitbox(backWallMin, backWallMax));
     std::cout << "Back Wall Min: " << backWallMin.x << ", " << backWallMin.y << ", " << backWallMin.z << std::endl;
     std::cout << "Back Wall Max: " << backWallMax.x << ", " << backWallMax.y << ", " << backWallMax.z << std::endl;
-   
+}
 
+// Function to reset the game
+void resetGame(Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel) {
+    // Reset game variables
+    gameScore = 0;
+    gameStartTime = glfwGetTime();
+    gameTimeElapsed = 0.0f;
+    gameStarted = false;
+    doOnce = true;
+    cowInflated = false;
+
+    // // Reset cow and car position and state
+    // car.reset();
+    // cow.reset();
+
+    // // Reset giraffes
+    // glm::vec3 center(0.0f, 0.0f, -20.0f);
+    // std::vector<glm::vec3> positions = generateBowlingPinPositions(center);
+    // for (size_t i = 0; i < giraffes.size(); ++i) {
+    //     giraffes[i].reset(positions[i]); // Assuming Giraffe_Character has a reset method
+    //     // If no reset method, manually reset variables
+    //     // giraffes[i].setPosition(positions[i]);
+    //     // giraffes[i].setSpeed(0.0f);
+    // }
 }
 
 // Main function
@@ -360,16 +421,15 @@ int main() {
 
     Car car(carModel);
     Cow_Character cow(cowModel);
-    //Giraffe_Character giraffe(giraffeModel);
 
     std::vector<Giraffe_Character> giraffes;
     glm::vec3 center(0.0f, 0.0f, -20.0f);
     for (const auto& position : generateBowlingPinPositions(center)) {
         giraffes.emplace_back(giraffeModel, position);  // This will use the move constructor
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 5 milliseconds
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100 milliseconds
     }
 
-        // Particle system for smoke (position the exhaust pipe relatively to the car)
+    // Particle system for smoke (position the exhaust pipe relatively to the car)
     glm::vec3 exhaustOffset = glm::vec3(-1.0f, 0.5f, -2.0f);  // Example exhaust position on the left side of the car
     ExhaustSystem exhaustSystem(100, exhaustOffset);  // Max 100 particles
 
@@ -401,11 +461,6 @@ int main() {
         std::cout << "Loading screen texture loaded successfully. ID: " << loadingScreenTexture << std::endl;
     }
 
-
-    // game logic checks
-    bool doOnce = true;
-    bool cowInflated = false;
-
     // Initialize time variables
     float lastTime = glfwGetTime();
 
@@ -431,8 +486,6 @@ int main() {
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        
-
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -456,7 +509,7 @@ int main() {
             gameTimeElapsed = currentTime - gameStartTime;
 
             // Check if 30 seconds have passed
-            if (gameTimeElapsed >= 30.0f) {
+            if (gameTimeElapsed >= 5.0f) {
                 currentState = STATE_END_GAME;
                 gameStarted = false;
                 std::cout << "Game over! Final Score: " << gameScore << std::endl;
@@ -624,9 +677,6 @@ int main() {
             textRenderer.RenderText(scoreText, 25.0f, 725.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // White color
 
             // Render the remaining time at the top right
-            // std::string timeText = "TIME: " + std::to_string(30 - gameTimeElapsed);
-            // textRenderer.RenderText(timeText, 875.0f, 725.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
-            
             std::stringstream stream;
             stream << std::fixed << std::setprecision(2) << (30.0f - gameTimeElapsed);
             std::string timeText = "TIME: " + stream.str();
@@ -637,16 +687,10 @@ int main() {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
             // Process end game input
-            processEndGameInput(window);
+            processEndGameInput(window, car, cow, giraffes, carModel, cowModel, giraffeModel);
 
             // Render the end game screen
-            renderEndGameScreen(quadShader);
-
-            // Optionally, render the final score
-            // textRenderer.Use(); // Activate the text shader
-            // std::string finalScoreText = "Final Score: " + std::to_string(gameScore);
-            // float finalScoreWidth = textRenderer.CalculateTextWidth(finalScoreText, 1.0f);
-            // textRenderer.RenderText(finalScoreText, 512.0f - finalScoreWidth / 2.0f, 400.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // Centered
+            renderEndGameScreen(quadShader, textRenderer, gameScore);
         }
 
         glfwSwapBuffers(window);
