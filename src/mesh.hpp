@@ -19,9 +19,9 @@ public:
     std::vector<unsigned int> indices;      // Ensure to use std::vector
     std::vector<Texture> textures;           // Ensure to use std::vector
     Material material;
-
+    
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, Material material);
-    void Draw(Shader& shader, unsigned int cubemapTextureID = -1);
+    void Draw(Shader &shader, unsigned int cubemapTextureID = -1, bool usePBR = false);
 
 private:
     // Render data
