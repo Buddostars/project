@@ -323,7 +323,7 @@ int main() {
     }
 
         // Particle system for smoke (position the exhaust pipe relatively to the car)
-    glm::vec3 exhaustOffset = glm::vec3(-1.0f, 0.5f, -2.0f);  // Example exhaust position on the left side of the car
+    glm::vec3 exhaustOffset = glm::vec3(0.0f, 0.7f, 0.0f);  // GTA-style damage smoke
     ExhaustSystem exhaustSystem(100, exhaustOffset);  // Max 100 particles
 
     // Create camera object
