@@ -347,21 +347,27 @@ void Cow_Character::gameHit(glm::vec3 hitDirection, float carSpeed)
     cowHit = true;
 }
 
-void Cow_Character::reset() {
+void Cow_Character::reset(const glm::vec3& newPosition) {
     std::lock_guard<std::mutex> lock(cowMutex);
-    position = glm::vec3(0.0f, 0.0f, -10.0f);
-    direction = glm::vec3(0.0f, 0.0f, 1.0f);
+
+    position = newPosition;
+    direction = glm::vec3(0.0f, 0.0f, -1.0f);
     distanceTraveled = 0.0f;
     moving = true;
     rotationAngle = 180.0f;
     stopDuration = 0.0f;
     timeStopped = 0.0f;
     velocity = glm::vec3(0.0f);
-    speed = 0.0f;
+    maxSpeed = 20.0f;
+    acceleration = 1.0f;
+    deceleration = 3.0f;
+    cowHit = false;
     totalRotationAngle = 0.0f;
     isRotating = false;
     targetRotationAngle = 0.0f;
-    rotationSpeed = 50.0f;  // Set to initial rotation speed
+    rotationSpeed = 20.0f;  // Set to initial rotation speed
+    // Reinitialize random number generator
+    rng.seed(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     // Recalculate hitbox
     hitbox = cowModel.calculateHitbox();
 }

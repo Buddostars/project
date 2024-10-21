@@ -29,7 +29,7 @@ public:
     void gameHit(glm::vec3 hitDirection, float carSpeed);  // Add knockback logic
     void moveRandomly(float deltaTime, const std::vector<Hitbox>& environmentHitboxes, const std::vector<Hitbox>& wallHitboxes );  // Updates the cow's position randomly based on deltaTime
     void draw(Shader& shader);  // Renders the cow model
-    void reset();
+    void reset(const glm::vec3& newPosition);
 
 private:
     glm::vec3 position;       // The current position of the cow

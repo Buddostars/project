@@ -186,11 +186,11 @@ unsigned int loadingScreenTexture;
 
 // Function declarations
 void processMenuInput(GLFWwindow* window);
-void processEndGameInput(GLFWwindow* window, Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel);
+void processEndGameInput(GLFWwindow* window, Car& car, std::vector<Cow_Character>& cows, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel);
 void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader);
 void renderEndGameScreen(Shader& quadShader, TextRenderer& textRenderer, int gameScore);
 void renderQuad(float x, float y, float width, float height);
-void resetGame(Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel);
+void resetGame(Car& car, std::vector<Cow_Character>& cows, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel);
 
 // Function: processMenuInput
 void processMenuInput(GLFWwindow* window) {
@@ -206,7 +206,7 @@ void processMenuInput(GLFWwindow* window) {
 }
 
 // Function to process input in the end game state
-void processEndGameInput(GLFWwindow* window, Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel) {
+void processEndGameInput(GLFWwindow* window, Car& car, std::vector<Cow_Character>& cows, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel) {
     // Detect when the user clicks "PLAY AGAIN" and reset the game
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         double xpos, ypos;
@@ -216,7 +216,7 @@ void processEndGameInput(GLFWwindow* window, Car& car, Cow_Character& cow, std::
         // Check if the click is within the button area
         if (xpos >= playAgainButton.x && xpos <= playAgainButton.x + playAgainButton.width &&
             ypos >= playAgainButton.y && ypos <= playAgainButton.y + playAgainButton.height) {
-            resetGame(car, cow, giraffes, carModel, cowModel, giraffeModel);
+            resetGame(car, cows, giraffes, carModel, cowModel, giraffeModel);
             currentState = STATE_MENU;
         }
     }
@@ -372,7 +372,7 @@ void initializeWallsFromGround(const Hitbox& groundHitbox) {
 }
 
 // Function to reset the game
-void resetGame(Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel) {
+void resetGame(Car& car, std::vector<Cow_Character>& cows, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel) {
     // Reset game variables
     gameScore = 0;
     gameStartTime = glfwGetTime();
@@ -381,13 +381,17 @@ void resetGame(Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& gir
     doOnce = true;
     cowInflated = false;
 
-    // Reset cow and car position and state
+    // Reset car position and state
     car.reset();
-    cow.reset();
+    
+    // Reset cows
+    std::vector<glm::vec3> cowPositions = generateSpacedObjectPositions(50, 90.0f, 5.0f);
+    for (size_t i = 0; i < cows.size(); ++i) {
+        cows[i].reset(cowPositions[i]);
+    }
 
     // Reset giraffes
-    glm::vec3 center(0.0f, 0.0f, -20.0f);
-    std::vector<glm::vec3> positions = generateSpacedObjectPositions(50, 90.0f, 5.0f);
+    std::vector<glm::vec3> positions = generateSpacedObjectPositions(200, 90.0f, 5.0f);
     for (size_t i = 0; i < giraffes.size(); ++i) {
         giraffes[i].reset(positions[i]);
     }
@@ -719,7 +723,7 @@ int main() {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
             // Process end game input
-            //processEndGameInput(window, car, cow, giraffes, carModel, cowModel, giraffeModel);
+            processEndGameInput(window, car, cows, giraffes, carModel, cowModel, giraffeModel);
 
             // Render the end game screen
             renderEndGameScreen(quadShader, textRenderer, gameScore);
