@@ -151,10 +151,6 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
 }
 
 
-
-
-
-
 void Car::draw(Shader& shader) {
     glm::mat4 carModelMatrix = glm::mat4(1.0f);
     carModelMatrix = glm::translate(carModelMatrix, position); // Position of car

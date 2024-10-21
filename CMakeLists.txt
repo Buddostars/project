@@ -17,6 +17,14 @@ set(SOURCES
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/controls.cpp
     ${CMAKE_SOURCE_DIR}/src/glad.c
+    ${CMAKE_SOURCE_DIR}/src/model.cpp       # Model class source
+    ${CMAKE_SOURCE_DIR}/src/texture_loader.cpp  # Texture loading functionality
+    ${CMAKE_SOURCE_DIR}/src/car.cpp         # Car class source
+    ${CMAKE_SOURCE_DIR}/src/Cow_Character.cpp # Cow_Character class source
+    ${CMAKE_SOURCE_DIR}/src/ExhaustSystem.cpp # ExhaustSystem class source
+    ${CMAKE_SOURCE_DIR}/src/Hitbox.cpp      # Hitbox class source
+    ${CMAKE_SOURCE_DIR}/src/mesh.cpp
+    ${CMAKE_SOURCE_DIR}/src/Giraffe_Character.cpp
 )
 
 # Add executable target
@@ -56,6 +64,7 @@ elseif(WIN32)
     target_link_libraries(${PROJECT_NAME}
         ${LIBRARY_PATH}/libglfw3dll.a
         ${LIBRARY_PATH}/libassimp.dll.a
+        ${LIBRARY_PATH}/libglew32.dll.a       
     )
 
     # Set runtime path for Windows

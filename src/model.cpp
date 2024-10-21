@@ -6,7 +6,7 @@
 void Model::loadModel(std::string const &path){
     // read file via ASSIMP
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals |  aiProcess_CalcTangentSpace); // aiProcess_FlipUVs |
     // check for errors
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
@@ -107,6 +107,24 @@ Mesh Model:: processMesh(aiMesh *mesh, const aiScene *scene){
     // 4. height maps
     std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+
+    // --- PBR --- 
+    // Albedo map
+    std::vector<Texture> albedoMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_albedo");
+    textures.insert(textures.end(), albedoMaps.begin(), albedoMaps.end());
+
+    // Metallic map
+    std::vector<Texture> metallicMaps = loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metallic");
+    textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
+
+    // Roughness map
+    std::vector<Texture> roughnessMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS, "texture_roughness");
+    textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
+
+    // Ambient Occlusion map
+    std::vector<Texture> aoMaps = loadMaterialTextures(material, aiTextureType_AMBIENT_OCCLUSION, "texture_ao");
+    textures.insert(textures.end(), aoMaps.begin(), aoMaps.end());
+
     
     // load material
     Material mat = loadMaterials(material);
@@ -116,9 +134,36 @@ Mesh Model:: processMesh(aiMesh *mesh, const aiScene *scene){
 }
 
 void Model::draw(Shader& shader) {
-    for(unsigned int i = 0; i < meshes.size(); i++)
+    for (unsigned int i = 0; i < meshes.size(); i++) {
+        // Bind PBR Textures
+        for (unsigned int j = 0; j < meshes[i].textures.size(); j++) {
+            glActiveTexture(GL_TEXTURE0 + j); // Activate the texture unit
+            std::string name = meshes[i].textures[j].type;
+
+            // In case of PBR, you would use specific names for PBR textures
+            if (name == "texture_albedo") {
+                shader.setInt("albedoMap", j); // Corresponds to GL_TEXTURE0 + j
+            } else if (name == "texture_normal") {
+                shader.setInt("normalMap", j); // Corresponds to GL_TEXTURE0 + j
+            } else if (name == "texture_metallic") {
+                shader.setInt("metallicMap", j); // Corresponds to GL_TEXTURE0 + j
+            } else if (name == "texture_roughness") {
+                shader.setInt("roughnessMap", j); // Corresponds to GL_TEXTURE0 + j
+            } else if (name == "texture_ao") {
+                shader.setInt("aoMap", j); // Corresponds to GL_TEXTURE0 + j
+            }
+
+            glBindTexture(GL_TEXTURE_2D, meshes[i].textures[j].id);
+        }
+
+        // Draw the mesh with the currently bound textures
         meshes[i].Draw(shader);
+    }
+
+    // Unbind textures after drawing
+    glActiveTexture(GL_TEXTURE0);
 }
+
 
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName)
 {
