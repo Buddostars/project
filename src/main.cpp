@@ -572,7 +572,7 @@ int main() {
         //    // Update the cow's position
         //     cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
             // Update the cow's position
-            cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
+            //cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
 
         //     glm::mat4 cowModelMatrix = glm::mat4(1.0f);
         //     cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
