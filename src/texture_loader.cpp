@@ -60,7 +60,7 @@ unsigned int loadTexture(const std::string& path) {
 
         stbi_image_free(data);
     } else {
-        std::cout << "Failed to load texture: " << path << std::endl;
+        //std::cout << "Failed to load texture: " << path << std::endl;
         stbi_image_free(data);
         return 0;
     }

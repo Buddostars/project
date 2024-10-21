@@ -347,29 +347,29 @@ void initializeWallsFromGround(const Hitbox& groundHitbox) {
     glm::vec3 leftWallMin = glm::vec3(groundMin.x, 0.0f, groundMin.z);
     glm::vec3 leftWallMax = glm::vec3(groundMin.x + 1.0f, 5.0f, groundMax.z);
     wallHitboxes.push_back(Hitbox(leftWallMin, leftWallMax));
-    std::cout << "Left Wall Min: " << leftWallMin.x << ", " << leftWallMin.y << ", " << leftWallMin.z << std::endl;
-    std::cout << "Left Wall Max: " << leftWallMax.x << ", " << leftWallMax.y << ", " << leftWallMax.z << std::endl;
+    //std::cout << "Left Wall Min: " << leftWallMin.x << ", " << leftWallMin.y << ", " << leftWallMin.z << std::endl;
+    //std::cout << "Left Wall Max: " << leftWallMax.x << ", " << leftWallMax.y << ", " << leftWallMax.z << std::endl;
 
     // Create Right Wall
     glm::vec3 rightWallMin = glm::vec3(groundMax.x - 1.0f, 0.0f, groundMin.z);
     glm::vec3 rightWallMax = glm::vec3(groundMax.x, 5.0f, groundMax.z);
     wallHitboxes.push_back(Hitbox(rightWallMin, rightWallMax));
-    std::cout << "Right Wall Min: " << rightWallMin.x << ", " << rightWallMin.y << ", " << rightWallMin.z << std::endl;
-    std::cout << "Right Wall Max: " << rightWallMax.x << ", " << rightWallMax.y << ", " << rightWallMax.z << std::endl;
+    //std::cout << "Right Wall Min: " << rightWallMin.x << ", " << rightWallMin.y << ", " << rightWallMin.z << std::endl;
+    //std::cout << "Right Wall Max: " << rightWallMax.x << ", " << rightWallMax.y << ", " << rightWallMax.z << std::endl;
 
     // Create Front Wall(north)
     glm::vec3 frontWallMin = glm::vec3(groundMin.x, 0.0f, groundMax.z - 1.0f);
     glm::vec3 frontWallMax = glm::vec3(groundMax.x, 5.0f, groundMax.z);
     wallHitboxes.push_back(Hitbox(frontWallMin, frontWallMax));
-    std::cout << "Front Wall Min: " << frontWallMin.x << ", " << frontWallMin.y << ", " << frontWallMin.z << std::endl;
-    std::cout << "Front Wall Max: " << frontWallMax.x << ", " << frontWallMax.y << ", " << frontWallMax.z << std::endl;
+    //std::cout << "Front Wall Min: " << frontWallMin.x << ", " << frontWallMin.y << ", " << frontWallMin.z << std::endl;
+    //std::cout << "Front Wall Max: " << frontWallMax.x << ", " << frontWallMax.y << ", " << frontWallMax.z << std::endl;
 
     // Create Back Wall(south)
     glm::vec3 backWallMin = glm::vec3(groundMin.x, 0.0f, groundMin.z);
     glm::vec3 backWallMax = glm::vec3(groundMax.x, 5.0f, groundMin.z + 1.0f);
     wallHitboxes.push_back(Hitbox(backWallMin, backWallMax));
-    std::cout << "Back Wall Min: " << backWallMin.x << ", " << backWallMin.y << ", " << backWallMin.z << std::endl;
-    std::cout << "Back Wall Max: " << backWallMax.x << ", " << backWallMax.y << ", " << backWallMax.z << std::endl;
+    //std::cout << "Back Wall Min: " << backWallMin.x << ", " << backWallMin.y << ", " << backWallMin.z << std::endl;
+    //std::cout << "Back Wall Max: " << backWallMax.x << ", " << backWallMax.y << ", " << backWallMax.z << std::endl;
 }
 
 // Function to reset the game
@@ -480,7 +480,7 @@ int main() {
     initializeWallsFromGround(groundHitbox);
 
     // Print the working directory
-    std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
+    //std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
 
     // Initialise Text Renderer
     TextRenderer textRenderer("src/fonts/arial.ttf", textShader, 30.0f);
@@ -536,7 +536,7 @@ int main() {
             if (gameTimeElapsed >= 30.0f) {
                 currentState = STATE_END_GAME;
                 gameStarted = false;
-                std::cout << "Game over! Final Score: " << gameScore << std::endl;
+                //std::cout << "Game over! Final Score: " << gameScore << std::endl;
             }
 
             car.update(deltaTime, window, exhaustSystem, environmentHitboxes, wallHitboxes);
@@ -718,7 +718,7 @@ int main() {
 
                         // // Score one point for each giraffe hit by a cow
                         // gameScore++;
-                        std::cout << "Giraffe hit! Current Score: " << gameScore << std::endl;
+                        //std::cout << "Giraffe hit! Current Score: " << gameScore << std::endl;
                     }
                     giraffe.update(deltaTime);
                 }
@@ -728,7 +728,7 @@ int main() {
             // Check for collisions between the car and the environment
             for (const auto& hitbox : environmentHitboxes) {
                 if (car.getHitbox().isColliding(hitbox)) {
-                    std::cout << "Car and environment collided!" << std::endl;
+                    //std::cout << "Car and environment collided!" << std::endl;
                 }
             }
 

@@ -118,14 +118,14 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
     if (!collision) {
         position = newPosition;
         if (collisionInt != 1) {
-            std::cout << "No collision detected!" << std::endl;
+            //std::cout << "No collision detected!" << std::endl;
             collisionInt = 1;
         }
         
     } else {
         if (collisionInt != 2) {
             speed = 0.0f;
-            std::cout << "Collision detected!" << std::endl;
+            //std::cout << "Collision detected!" << std::endl;
             collisionInt = 2;
         }
         
@@ -141,7 +141,7 @@ void Car::update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSyst
     // Check for collisions with the walls
     for (const auto& wallHitbox : wallHitboxes) {
         if (hitbox.isColliding(wallHitbox)) {
-            std::cout << "Car and wall collided!" << std::endl;
+            //std::cout << "Car and wall collided!" << std::endl;
             speed = 0.0f;
             break;
         }
@@ -188,7 +188,7 @@ Hitbox Car::getHitbox() const {
 }
 
 void Car::gameHit() {
-    std::cout << "Car and cow collided!" << std::endl;
+    //std::cout << "Car and cow collided!" << std::endl;
     speed = speed * 0.5;
 }
 

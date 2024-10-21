@@ -208,7 +208,7 @@ void Cow_Character::moveRandomly(float deltaTime, const std::vector<Hitbox> &env
             {
                 collision = true;
                 speed = 0.0f; // Stop the cow
-                std::cout << "Environment collision detected! Cow stopped" << std::endl;
+                //std::cout << "Environment collision detected! Cow stopped" << std::endl;
                 break;
             }
         }
@@ -230,7 +230,7 @@ void Cow_Character::moveRandomly(float deltaTime, const std::vector<Hitbox> &env
                     // clamp the cow position to stay within the wall
                     position.x = direction.x > 0 ? wallHitbox.maxCorner.x + 1.0f : wallHitbox.minCorner.x - 1.0f;
 
-                    std::cout << "Wall collision detected! Cow bounced off" << std::endl;
+                    //std::cout << "Wall collision detected! Cow bounced off" << std::endl;
                 }
                 if (newHitbox.minCorner.z <= wallHitbox.maxCorner.z || newHitbox.maxCorner.z >= wallHitbox.minCorner.z)
                 {
@@ -239,7 +239,7 @@ void Cow_Character::moveRandomly(float deltaTime, const std::vector<Hitbox> &env
                     // clamp the cow position to stay within the wall
                     position.z = direction.z > 0 ? wallHitbox.maxCorner.z + 1.0f : wallHitbox.minCorner.z - 1.0f;
 
-                    std::cout << "Wall collision detected! Cow bounced off" << std::endl;
+                    //std::cout << "Wall collision detected! Cow bounced off" << std::endl;
                 }
 
                 break;
@@ -258,7 +258,7 @@ void Cow_Character::moveRandomly(float deltaTime, const std::vector<Hitbox> &env
         else
         {
             speed = 0.0f; // Stop the cow
-            std::cout << "Environment collision detected! Cow stopped" << std::endl;
+            //std::cout << "Environment collision detected! Cow stopped" << std::endl;
         }
     }
     else

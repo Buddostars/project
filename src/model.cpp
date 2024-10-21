@@ -144,23 +144,23 @@ void Model::draw(Shader& shader, unsigned int cubemapTextureID) {
             // use specific names for PBR textures
             if (name == "texture_albedo") {
                 shader.setInt("albedoMap", j); // Corresponds to GL_TEXTURE0 + j
-                std::cout << "Albedo map set\n";
+                //std::cout << "Albedo map set\n";
 
             } else if (name == "texture_normal") {
                 shader.setInt("normalMap", j); // Corresponds to GL_TEXTURE0 + j
-                std::cout << "normal map set\n";
+                //std::cout << "normal map set\n";
 
             } else if (name == "texture_metallic") {
                 shader.setInt("metallicMap", j); // Corresponds to GL_TEXTURE0 + j
-                std::cout << "mettallic map set\n";
+                //std::cout << "mettallic map set\n";
 
             } else if (name == "texture_roughness") {
                 shader.setInt("roughnessMap", j); // Corresponds to GL_TEXTURE0 + j
-                std::cout << "roughness map set\n";
+                //std::cout << "roughness map set\n";
 
             } else if (name == "texture_ao") {
                 shader.setInt("aoMap", j); // Corresponds to GL_TEXTURE0 + j
-                std::cout << "ao map set\n";
+                //std::cout << "ao map set\n";
             }
 
             glBindTexture(GL_TEXTURE_2D, meshes[i].textures[j].id);
