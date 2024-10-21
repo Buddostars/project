@@ -28,6 +28,7 @@ Giraffe_Character(Model& model);
     void gameHit(glm::vec3 hitDirection, float cowSpeed, float deltaTime);  // Add knockback logic
 
     void update(float deltaTime);
+     void reset(const glm::vec3& newPosition);
 
 private:
     Model& giraffeModel;      // The giraffe's 3D model

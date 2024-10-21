@@ -19,6 +19,7 @@ public:
     void update(float deltaTime, GLFWwindow* window, ExhaustSystem& exhaustSystem, std::vector<Hitbox>& environmentHitboxes, std::vector<Hitbox>& wallHitboxes);
     void draw(Shader& shader);
     void gameHit();
+    void reset();
 
 
     // Getters 

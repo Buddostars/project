@@ -300,3 +300,21 @@ void Cow_Character::gameHit(glm::vec3 hitDirection, float carSpeed)
 
     std::cout << "Cow hit! Knockback velocity: " << velocity.x << ", " << velocity.y << ", " << velocity.z << std::endl;
 }
+
+void Cow_Character::reset() {
+    position = glm::vec3(0.0f, 0.0f, -10.0f);
+    direction = glm::vec3(0.0f, 0.0f, 1.0f);
+    distanceTraveled = 0.0f;
+    moving = true;
+    rotationAngle = 180.0f;
+    stopDuration = 0.0f;
+    timeStopped = 0.0f;
+    velocity = glm::vec3(0.0f);
+    speed = 0.0f;
+    totalRotationAngle = 0.0f;
+    isRotating = false;
+    targetRotationAngle = 0.0f;
+    rotationSpeed = 50.0f;  // Set to initial rotation speed
+    // Recalculate hitbox
+    hitbox = cowModel.calculateHitbox();
+}

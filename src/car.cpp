@@ -189,3 +189,12 @@ void Car::gameHit() {
     std::cout << "Car and cow collided!" << std::endl;
     speed = -10.0f;
 }
+
+void Car::reset() {
+    position = glm::vec3(0.0f, 0.0f, 0.0f);
+    speed = 0.0f;
+    steeringAngle = 0.0f;
+    collisionInt = 0;
+    // Recalculate hitbox
+    hitbox = model.calculateHitbox();
+}

@@ -232,3 +232,28 @@ void Giraffe_Character::update(float deltaTime) {
     direction = glm::normalize(glm::vec3(rotationMatrix * glm::vec4(1.0f, 1.0f, 1.0f, 0.0f)));
     // std::cout << rotationStep << " " << rotationSpeed << " " << deltaTime << " " << totalRotationAngle << " " << targetRotationAngle << std::endl;
 }
+
+void Giraffe_Character::reset(const glm::vec3& newPosition) {
+    std::lock_guard<std::mutex> lock(giraffeMutex);
+
+    position = newPosition;
+    direction = glm::vec3(0.0f, 0.0f, -1.0f);
+    distanceTraveled = 0.0f;
+    moving = true;
+    rotationAngle = 180.0f;
+    stopDuration = 0.0f;
+    timeStopped = 0.0f;
+    velocity = glm::vec3(0.0f);
+    speed = 0.0f;
+    totalRotationAngle = 0.0f;
+    isRotating = false;
+    targetRotationAngle = 0.0f;
+    rotationSpeed = 20.0f;  // Set to initial rotation speed
+    isKnockedDown = false;
+    knockdownDuration = 0.0f;
+    knockdownTimer = 0.0f;
+    // Reinitialize random number generator
+    rng.seed(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    // Recalculate hitbox
+    hitbox = giraffeModel.calculateHitbox();
+}

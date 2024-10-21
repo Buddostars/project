@@ -377,19 +377,16 @@ void resetGame(Car& car, Cow_Character& cow, std::vector<Giraffe_Character>& gir
     doOnce = true;
     cowInflated = false;
 
-    // // Reset cow and car position and state
-    // car.reset();
-    // cow.reset();
+    // Reset cow and car position and state
+    car.reset();
+    cow.reset();
 
-    // // Reset giraffes
-    // glm::vec3 center(0.0f, 0.0f, -20.0f);
-    // std::vector<glm::vec3> positions = generateBowlingPinPositions(center);
-    // for (size_t i = 0; i < giraffes.size(); ++i) {
-    //     giraffes[i].reset(positions[i]); // Assuming Giraffe_Character has a reset method
-    //     // If no reset method, manually reset variables
-    //     // giraffes[i].setPosition(positions[i]);
-    //     // giraffes[i].setSpeed(0.0f);
-    // }
+    // Reset giraffes
+    glm::vec3 center(0.0f, 0.0f, -20.0f);
+    std::vector<glm::vec3> positions = generateBowlingPinPositions(center);
+    for (size_t i = 0; i < giraffes.size(); ++i) {
+        giraffes[i].reset(positions[i]);
+    }
 }
 
 // Main function
