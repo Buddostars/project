@@ -26,7 +26,13 @@ git clone https://github.com/Buddostars/project
 ```
 2.  Compiling on mac
 
+    1. In VSCode navigate to the main.cpp file.
+    2. Run the file and select the option "C/C++: clang++ build and debug active file preLaunchTask: C/C++ clang++ macos ARM"
+    3. Now the complile task should start and run the program afterwards.
 
+    Make sure that only the macOS task is available in your tasks.json (.vscode/tasks.json)
+
+    After compiling it you can run it again running the ./app in the projects root.
 
 3. Compiling on window
 
@@ -48,3 +54,8 @@ git clone https://github.com/Buddostars/project
 
     5. Once built in the same terminal type `./main` to run it 
 
+## Additional Information
+
+For more detailed setup instructions, refer to the [vs_code_setup.md](vs_code_setup.md) file.
+
+Enjoy the game!
