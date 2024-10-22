@@ -32,7 +32,7 @@ git clone https://github.com/Buddostars/project
 
     Make sure that only the macOS task is available in your tasks.json (.vscode/tasks.json)
 
-    After compiling it you can run it again running the ./app in the projects root.
+    After compiling it you can run it again running the `./app` in the projects root.
 
 3. Compiling on window
 
