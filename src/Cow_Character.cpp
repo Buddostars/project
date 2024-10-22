@@ -358,7 +358,7 @@ void Cow_Character::reset(const glm::vec3& newPosition) {
     stopDuration = 0.0f;
     timeStopped = 0.0f;
     velocity = glm::vec3(0.0f);
-    maxSpeed = 20.0f;
+    maxSpeed = 3.0f;
     acceleration = 1.0f;
     deceleration = 3.0f;
     cowHit = false;

@@ -4,7 +4,7 @@
 
 
 Car::Car(Model& carModel) 
-    :model(carModel), position(0.0f, 0.0f, 0.0f), speed(0.0f), maxSpeed(50.0f), steeringAngle(0.0f), turningSpeed(90.0f), collisionInt(0),
+    :model(carModel), position(0.0f, 0.0f, 0.0f), speed(0.0f), maxSpeed(30.0f), steeringAngle(0.0f), turningSpeed(90.0f), collisionInt(0),
     hitbox(carModel.calculateHitbox()) 
     {}
     

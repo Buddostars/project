@@ -429,14 +429,14 @@ int main() {
     Car car(carModel);
 
     std::vector<Cow_Character> cows;
-    for (const auto& position : generateSpacedObjectPositions(20, 90.0f, 5.0f)) {
+    for (const auto& position : generateSpacedObjectPositions(20, 70.0f, 5.0f)) {
         cows.emplace_back(cowModel, position);  // This will use the move constructor
         std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100 milliseconds
     }
 
     std::vector<Giraffe_Character> giraffes;
     glm::vec3 center(0.0f, 0.0f, -20.0f);
-    for (const auto& position : generateSpacedObjectPositions(50, 90.0f, 5.0f)) {
+    for (const auto& position : generateSpacedObjectPositions(50, 70.0f, 5.0f)) {
         giraffes.emplace_back(giraffeModel, position);  // This will use the move constructor
         std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100 milliseconds
     }
@@ -532,8 +532,8 @@ int main() {
             // Compute game time elapsed
             gameTimeElapsed = currentTime - gameStartTime;
 
-            // Check if 30 seconds have passed
-            if (gameTimeElapsed >= 30.0f) {
+            // Check if 120 seconds have passed
+            if (gameTimeElapsed >= 120.0f) {
                 currentState = STATE_END_GAME;
                 gameStarted = false;
                 //std::cout << "Game over! Final Score: " << gameScore << std::endl;
@@ -741,7 +741,7 @@ int main() {
 
             // Render the remaining time at the top right
             std::stringstream stream;
-            stream << std::fixed << std::setprecision(2) << (30.0f - gameTimeElapsed);
+            stream << std::fixed << std::setprecision(2) << (120.0f - gameTimeElapsed);
             std::string timeText = "TIME: " + stream.str();
             textRenderer.RenderText(timeText, 875.0f, 725.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // White color
 
