@@ -53,9 +53,3 @@ git clone https://github.com/Buddostars/project
     Note: (Path to project) will be the path on where you have cloned the project
 
     5. Once built in the same terminal type `./main` to run it 
-
-## Additional Information
-
-For more detailed setup instructions, refer to the [vs_code_setup.md](vs_code_setup.md) file.
-
-Enjoy the game!
