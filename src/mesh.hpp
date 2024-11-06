@@ -10,6 +10,7 @@
 #include "shader.h"
 #include "globals.hpp"
 #include "texture.hpp"
+#include "material.hpp"
 
 class Mesh {
 public:
@@ -17,9 +18,10 @@ public:
     std::vector<Vertex> vertices;           // Ensure to use std::vector
     std::vector<unsigned int> indices;      // Ensure to use std::vector
     std::vector<Texture> textures;           // Ensure to use std::vector
-
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
-    void Draw(Shader& shader);
+    Material material;
+    
+    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, Material material);
+    void Draw(Shader &shader, unsigned int cubemapTextureID = -1, bool usePBR = false);
 
 private:
     // Render data

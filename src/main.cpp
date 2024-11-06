@@ -16,6 +16,9 @@
 #include <unordered_set>
 #include <iostream>
 #include <stb_image.h>
+#include <future>
+#include <sstream>
+#include <iomanip>
 
 #include "shader.h"
 #include "controls.hpp"
@@ -23,24 +26,49 @@
 #include "model.hpp"
 #include "globals.hpp"
 #include "car.hpp"
+#include "Cow_Character.h"
+#include "Giraffe_Character.h"
+#include "ExhaustSystem.h"
+#include "TextRenderer.h"   // To show the game score
+#include "cubemap.hpp"
 
 // Define the GameState enum before using it
 enum GameState {
     STATE_MENU,
     STATE_GAME,
+    STATE_END_GAME, // Added this line
     STATE_PAUSE,
     // Add more later if required
 };
 
-
 // Game state variable
 GameState currentState = STATE_MENU;
+
+// Game variables
+float gameStartTime = 0.0f;
+float gameTimeElapsed = 0.0f;
+int gameScore = 0;
+bool gameStarted = false;
+
+// Game logic variables
+bool doOnce = true;
+bool cowInflated = false;
 
 struct Vec3Hash {
     std::size_t operator()(const glm::vec3& v) const {
         return std::hash<float>()(v.x) ^ std::hash<float>()(v.y) ^ std::hash<float>()(v.z);
     }
 };
+
+// Define a struct for the "PLAY AGAIN" button
+struct Button {
+    float x;
+    float y;
+    float width;
+    float height;
+};
+
+Button playAgainButton; // Global variable for the "PLAY AGAIN" button
 
 // Function to initialize GLFW
 GLFWwindow* initializeWindow() {
@@ -114,7 +142,11 @@ std::vector<glm::vec3> generateSpacedObjectPositions(int count, float range, flo
 
     while (positions.size() < count) {
         // Generate a new potential position
-        glm::vec3 newPosition(dist(gen), 0.0f, dist(gen));
+        float xRNG = dist(gen);
+        float xSpan = xRNG + ((xRNG / abs(xRNG)) * 5.0); // stop spawning 5 units left and right of origin (car position)
+        float zRNG = dist(gen);
+        float zSpan = zRNG + ((zRNG / abs(zRNG)) * 3.0); // stop spawning 3 units left and right of origin (car position)
+        glm::vec3 newPosition(xSpan, 0.0f, zSpan);
 
         // Check if the new position is valid (i.e., far enough from other positions)
         if (isPositionValid(newPosition, positions, minDistance)) {
@@ -125,13 +157,41 @@ std::vector<glm::vec3> generateSpacedObjectPositions(int count, float range, flo
     return positions;
 }
 
+// Function to generate bowling pin positions with at least 5 units of distance between them
+std::vector<glm::vec3> generateBowlingPinPositions(glm::vec3 center) {
+    std::vector<glm::vec3> positions;
+
+    // line 1
+    positions.push_back(center + glm::vec3(0.0f, 0.0f, 2.0f));
+
+    // line 2
+    positions.push_back(center + glm::vec3(-0.5f, 0.0f, 1.0f));
+    positions.push_back(center + glm::vec3(0.5f, 0.0f, 1.0f));
+
+    // line 3
+    positions.push_back(center + glm::vec3(-1.0f, 0.0f, 0.0f));
+    positions.push_back(center);
+    positions.push_back(center + glm::vec3(1.0f, 0.0f, 0.0f));
+
+    // line 4
+    positions.push_back(center + glm::vec3(-1.5f, 0.0f, -1.0f));
+    positions.push_back(center + glm::vec3(-0.5f, 0.0f, -1.0f));
+    positions.push_back(center + glm::vec3(0.5f, 0.0f, -1.0f));
+    positions.push_back(center + glm::vec3(1.5f, 0.0f, -1.0f));
+
+    return positions;
+}
+
 // Declare the texture ID for the loading screen
 unsigned int loadingScreenTexture;
 
 // Function declarations
 void processMenuInput(GLFWwindow* window);
+void processEndGameInput(GLFWwindow* window, Car& car, std::vector<Cow_Character>& cows, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel);
 void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader);
+void renderEndGameScreen(Shader& quadShader, TextRenderer& textRenderer, int gameScore);
 void renderQuad(float x, float y, float width, float height);
+void resetGame(Car& car, std::vector<Cow_Character>& cows, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel);
 
 // Function: processMenuInput
 void processMenuInput(GLFWwindow* window) {
@@ -142,6 +202,23 @@ void processMenuInput(GLFWwindow* window) {
         ypos = 768.0 - ypos; // Invert Y coordinate
         if (xpos >= 337.0 && xpos <= 687.0 && ypos >= 430.0 && ypos <= 500.0) {
             currentState = STATE_GAME;
+        }
+    }
+}
+
+// Function to process input in the end game state
+void processEndGameInput(GLFWwindow* window, Car& car, std::vector<Cow_Character>& cows, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel) {
+    // Detect when the user clicks "PLAY AGAIN" and reset the game
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        ypos = 818.0 - ypos; // Invert Y coordinate
+
+        // Check if the click is within the button area
+        if (xpos >= playAgainButton.x && xpos <= playAgainButton.x + playAgainButton.width &&
+            ypos >= playAgainButton.y && ypos <= playAgainButton.y + playAgainButton.height) {
+            resetGame(car, cows, giraffes, carModel, cowModel, giraffeModel);
+            currentState = STATE_MENU;
         }
     }
 }
@@ -170,6 +247,50 @@ void renderLoadingScreen(unsigned int backgroundTexture, Shader& quadShader) {
     glEnable(GL_DEPTH_TEST);
 }
 
+// Function to render the end game screen
+void renderEndGameScreen(Shader& quadShader, TextRenderer& textRenderer, int gameScore) {
+    // Set clear color to black
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Disable depth testing so 2D elements are rendered on top
+    glDisable(GL_DEPTH_TEST);
+
+    // Set up orthographic projection for 2D rendering
+    glm::mat4 projection = glm::ortho(0.0f, 1024.0f, 0.0f, 768.0f);
+
+    // Render "GAME OVER" text
+    textRenderer.SetProjection(projection);
+    float gameOverScale = 2.0f;
+    std::string gameOverText = "GAME OVER";
+    float gameOverWidth = textRenderer.CalculateTextWidth(gameOverText, gameOverScale);
+    textRenderer.RenderText(gameOverText, 512.0f - gameOverWidth / 2.0f, 600.0f, gameOverScale, glm::vec3(1.0f));
+
+    // Render "SCORE: X" text
+    float scoreScale = 1.5f;
+    std::string scoreText = "SCORE: " + std::to_string(gameScore);
+    float scoreWidth = textRenderer.CalculateTextWidth(scoreText, scoreScale);
+    textRenderer.RenderText(scoreText, 512.0f - scoreWidth / 2.0f, 500.0f, scoreScale, glm::vec3(1.0f));
+
+    // Render "PLAY AGAIN" button as text
+    float buttonScale = 1.5f;
+    std::string buttonText = "PLAY_AGAIN_IN_NIGHT_MODE";
+    float buttonWidth = textRenderer.CalculateTextWidth(buttonText, buttonScale);
+    float buttonX = 512.0f - buttonWidth / 2.0f;
+    float buttonY = 400.0f; // y-position of the button
+    float buttonHeight = 50.0f; // approximate height of the text, adjust as needed
+
+    // Store the button area in the global variable
+    playAgainButton.x = buttonX;
+    playAgainButton.y = buttonY;
+    playAgainButton.width = buttonWidth;
+    playAgainButton.height = buttonHeight;
+
+    textRenderer.RenderText(buttonText, buttonX, buttonY, buttonScale, glm::vec3(1.0f));
+
+    // Re-enable depth testing
+    glEnable(GL_DEPTH_TEST);
+}
 
 // Function: renderQuad
 void renderQuad(float x, float y, float width, float height) {
@@ -215,6 +336,68 @@ void renderQuad(float x, float y, float width, float height) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+// Hitbox for the walls around map
+std::vector<Hitbox> wallHitboxes;
+
+void initializeWallsFromGround(const Hitbox& groundHitbox) {
+    glm::vec3 groundMin = groundHitbox.minCorner;
+    glm::vec3 groundMax = groundHitbox.maxCorner;
+
+    // Create Left Wall
+    glm::vec3 leftWallMin = glm::vec3(groundMin.x, 0.0f, groundMin.z);
+    glm::vec3 leftWallMax = glm::vec3(groundMin.x + 1.0f, 5.0f, groundMax.z);
+    wallHitboxes.push_back(Hitbox(leftWallMin, leftWallMax));
+    //std::cout << "Left Wall Min: " << leftWallMin.x << ", " << leftWallMin.y << ", " << leftWallMin.z << std::endl;
+    //std::cout << "Left Wall Max: " << leftWallMax.x << ", " << leftWallMax.y << ", " << leftWallMax.z << std::endl;
+
+    // Create Right Wall
+    glm::vec3 rightWallMin = glm::vec3(groundMax.x - 1.0f, 0.0f, groundMin.z);
+    glm::vec3 rightWallMax = glm::vec3(groundMax.x, 5.0f, groundMax.z);
+    wallHitboxes.push_back(Hitbox(rightWallMin, rightWallMax));
+    //std::cout << "Right Wall Min: " << rightWallMin.x << ", " << rightWallMin.y << ", " << rightWallMin.z << std::endl;
+    //std::cout << "Right Wall Max: " << rightWallMax.x << ", " << rightWallMax.y << ", " << rightWallMax.z << std::endl;
+
+    // Create Front Wall(north)
+    glm::vec3 frontWallMin = glm::vec3(groundMin.x, 0.0f, groundMax.z - 1.0f);
+    glm::vec3 frontWallMax = glm::vec3(groundMax.x, 5.0f, groundMax.z);
+    wallHitboxes.push_back(Hitbox(frontWallMin, frontWallMax));
+    //std::cout << "Front Wall Min: " << frontWallMin.x << ", " << frontWallMin.y << ", " << frontWallMin.z << std::endl;
+    //std::cout << "Front Wall Max: " << frontWallMax.x << ", " << frontWallMax.y << ", " << frontWallMax.z << std::endl;
+
+    // Create Back Wall(south)
+    glm::vec3 backWallMin = glm::vec3(groundMin.x, 0.0f, groundMin.z);
+    glm::vec3 backWallMax = glm::vec3(groundMax.x, 5.0f, groundMin.z + 1.0f);
+    wallHitboxes.push_back(Hitbox(backWallMin, backWallMax));
+    //std::cout << "Back Wall Min: " << backWallMin.x << ", " << backWallMin.y << ", " << backWallMin.z << std::endl;
+    //std::cout << "Back Wall Max: " << backWallMax.x << ", " << backWallMax.y << ", " << backWallMax.z << std::endl;
+}
+
+// Function to reset the game
+void resetGame(Car& car, std::vector<Cow_Character>& cows, std::vector<Giraffe_Character>& giraffes, Model& carModel, Model& cowModel, Model& giraffeModel) {
+    // Reset game variables
+    gameScore = 0;
+    gameStartTime = glfwGetTime();
+    gameTimeElapsed = 0.0f;
+    gameStarted = false;
+    doOnce = true;
+    cowInflated = false;
+
+    // Reset car position and state
+    car.reset();
+    
+    // Reset cows
+    std::vector<glm::vec3> cowPositions = generateSpacedObjectPositions(10, 90.0f, 5.0f);
+    for (size_t i = 0; i < cows.size(); ++i) {
+        cows[i].reset(cowPositions[i]);
+    }
+
+    // Reset giraffes
+    std::vector<glm::vec3> positions = generateSpacedObjectPositions(20, 90.0f, 5.0f);
+    for (size_t i = 0; i < giraffes.size(); ++i) {
+        giraffes[i].reset(positions[i]);
+    }
+}
+
 // Main function
 int main() {
     GLFWwindow* window = initializeWindow();
@@ -224,6 +407,10 @@ int main() {
     Shader quadShader("src/shaders/quad_shader.vert", "src/shaders/quad_shader.frag");
     Shader shaderProgram("src/shaders/vertex_shader.vert", "src/shaders/fragment_shader.frag");
     Shader objectShader("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
+    //Shader objectShader2("src/shaders/obj_vertex_shader.vert", "src/shaders/obj_fragment_shader.frag");
+    Shader reflectionShader("src/shaders/reflection_vertex_shader.vert", "src/shaders/reflection_fragment_shader.frag");
+    Shader smokeShader("src/shaders/particle_vertex_shader.vert", "src/shaders/particle_fragment_shader.frag");
+    Shader textShader("src/shaders/text_shader.vert", "src/shaders/text_shader.frag");
 
     // Load models
     Model big_rock("src/models/big_rock.obj");
@@ -231,20 +418,47 @@ int main() {
     Model tree("src/models/tree.obj");
     Model ground("src/models/ground.obj");
     Model carModel("src/models/car.obj");
+    Model cowModel("src/models/cow.obj");
+    Model giraffeModel("src/models/new_giraffe.obj");
+    
+    // Create game objects
+    Hitbox groundHitbox = ground.calculateHitbox();
+    glm::vec3 groundMin = groundHitbox.minCorner;
+    glm::vec3 groundMax = groundHitbox.maxCorner;
 
     Car car(carModel);
+
+    std::vector<Cow_Character> cows;
+    for (const auto& position : generateSpacedObjectPositions(20, 70.0f, 5.0f)) {
+        cows.emplace_back(cowModel, position);  // This will use the move constructor
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100 milliseconds
+    }
+
+    std::vector<Giraffe_Character> giraffes;
+    glm::vec3 center(0.0f, 0.0f, -20.0f);
+    for (const auto& position : generateSpacedObjectPositions(50, 70.0f, 5.0f)) {
+        giraffes.emplace_back(giraffeModel, position);  // This will use the move constructor
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100 milliseconds
+    }
+
+        // Particle system for smoke (position the exhaust pipe relatively to the car)
+    glm::vec3 exhaustOffset = glm::vec3(0.0f, 0.7f, 0.0f);  // GTA-style damage smoke
+    ExhaustSystem exhaustSystem(100, exhaustOffset);  // Max 100 particles
 
     // Create camera object
     Camera camera;
 
-    int treeCount = 50;
+    int treeCount = 10;
     std::vector<glm::vec3> treePositions = generateSpacedObjectPositions(treeCount, 90.0f, 15.0f);  // Range -90 to 90, at least 5 units apart
 
-    int bigRockCount = 80;
+    int bigRockCount = 15;
     std::vector<glm::vec3> bigRockPositions = generateSpacedObjectPositions(bigRockCount, 90.0f, 15.0f);
 
-    int smallRockCount = 50;
+    int smallRockCount = 30;
     std::vector<glm::vec3> smallRockPositions = generateSpacedObjectPositions(smallRockCount, 90.0f, 15.0f);
+
+    // Hitboxes for collision detection
+    std::vector<Hitbox> environmentHitboxes;
 
     std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
 
@@ -259,33 +473,42 @@ int main() {
         std::cout << "Loading screen texture loaded successfully. ID: " << loadingScreenTexture << std::endl;
     }
 
-    
-
-    // // Set light properties
-    // glm::vec3 lightPos(1.2f, 100.0f, 2.0f);
-    // glm::vec3 lightDirection = glm::normalize(glm::vec3(0.0f, -1.0f, -0.3f));
-    // glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 0.9f);  // Slightly yellow
-    // glm::vec3 objectColor = glm::vec3(0.6f, 0.6f, 0.6f);  // Gray
-    // glm::vec3 viewPos(0.0f, 40.0f, 3.0f);
-
-    // Initialize model position
-    glm::vec3 modelPosition(0.0f, 0.0f, 0.0f);
-
-    
-
-
     // Initialize time variables
     float lastTime = glfwGetTime();
 
+    // Initialize the walls around the map
+    initializeWallsFromGround(groundHitbox);
+
+    // Print the working directory
+    //std::cout << "Current Working Directory: " << std::filesystem::current_path() << std::endl;
+
+    // Initialise Text Renderer
+    TextRenderer textRenderer("src/fonts/arial.ttf", textShader, 30.0f);
+
+    // Set up projection matrix for text rendering
+    glm::mat4 textProjection = glm::ortho(0.0f, static_cast<float>(1024), 0.0f, static_cast<float>(768));
+    textRenderer.SetProjection(textProjection);
+
+    // load cubemap
+    std::vector<std::string> faces
+        {
+            "src/cubemap/lnegy.png",   // Positive X (right face)
+            "src/cubemap/lnegz.png",    // Negative X (left face)
+            "src/cubemap/lnegx.png",     // Positive Y (top face)
+            "src/cubemap/lposx.png",  // Negative Y (bottom face)
+            "src/cubemap/lposy.png",   // Positive Z (front face)
+            "src/cubemap/lposz.png"     // Negative Z (back face)
+        };
+    Cubemap cubemap(faces);  // Load the cubemap
+
     // Main loop
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window)) {
+        
         glfwPollEvents(); // Process events
 
         float currentTime = glfwGetTime();
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
-
-        
 
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -300,8 +523,23 @@ int main() {
             // Render the loading screen with background image
             renderLoadingScreen(loadingScreenTexture, quadShader);
         } else if (currentState == STATE_GAME) {
+            if (!gameStarted) {
+                gameStartTime = glfwGetTime();
+                gameScore = 0;
+                gameStarted = true;
+            }
 
-            car.update(deltaTime, window);
+            // Compute game time elapsed
+            gameTimeElapsed = currentTime - gameStartTime;
+
+            // Check if 120 seconds have passed
+            if (gameTimeElapsed >= 120.0f) {
+                currentState = STATE_END_GAME;
+                gameStarted = false;
+                //std::cout << "Game over! Final Score: " << gameScore << std::endl;
+            }
+
+            car.update(deltaTime, window, exhaustSystem, environmentHitboxes, wallHitboxes);
 
             camera.computeMatricesFromInputs(window, car.getPosition(), car.getForwardDirection());
             
@@ -316,8 +554,11 @@ int main() {
             setLightingAndObjectProperties(shaderProgram);
             setLightingAndObjectProperties(objectShader);
 
+
+            cubemap.draw(objectShader);  // Draw the cubemap
+
             // Draw the car model   
-            car.draw(shaderProgram);
+            car.draw(objectShader);
 
             // Draw the ground model
             glm::mat4 groundModel = glm::mat4(1.0f);
@@ -327,40 +568,192 @@ int main() {
             objectShader.setMat4("projection", projection);
             ground.draw(objectShader); // Draw ground
 
-            // Draw the tree model using fixed positions
-            for (const auto& position : treePositions) {
-                glm::mat4 treeModel = glm::mat4(1.0f);
-                treeModel = glm::translate(treeModel, position); // Use fixed position
-                treeModel = glm::scale(treeModel, glm::vec3(0.5f, 0.5f, 0.5f)); // Scale trees if necessary
-                
-                shaderProgram.setMat4("model", treeModel);
-                shaderProgram.setMat4("view", view);
-                shaderProgram.setMat4("projection", projection);
-                tree.draw(shaderProgram); // Draw tree
+
+        //    // Update the cow's position
+        //     cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
+            // Update the cow's position
+            //cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
+
+        //     glm::mat4 cowModelMatrix = glm::mat4(1.0f);
+        //     cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
+        //     cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
+        //     cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
+
+        //     // Pass the updated matrices to the shader
+        //     objectShader.setMat4("model", cowModelMatrix);
+        //     objectShader.setMat4("view", view);
+        //     objectShader.setMat4("projection", projection);
+
+        //     // Render the cow
+        //     cow.draw(objectShader);
+
+            // Use a thread pool for cow updates
+            std::vector<std::future<void>> cowFutures;
+            
+            for (auto& cow : cows) {
+                cowFutures.push_back(std::async(std::launch::async, [&cow, deltaTime, &environmentHitboxes]() {
+                    cow.moveRandomly(deltaTime, environmentHitboxes, wallHitboxes);  // Update position and movement logic
+                }));
             }
+
+            // Wait for all cow to finish updating
+            for (auto& future : cowFutures) {
+                future.get();  // Ensure all updates are complete
+            }
+
+            // Render the cow after movement updates
+            for (auto& cow : cows) {
+                glm::mat4 cowModelMatrix = glm::mat4(1.0f);
+                cowModelMatrix = glm::translate(cowModelMatrix, cow.getPosition());
+                cowModelMatrix = glm::rotate(cowModelMatrix, glm::radians(cow.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
+                cowModelMatrix = glm::scale(cowModelMatrix, glm::vec3(0.1f, 0.1f, 0.1f));
+
+                objectShader.setMat4("model", cowModelMatrix);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+                cow.draw(objectShader);
+            }
+
+            // Use a thread pool for giraffe updates
+            std::vector<std::future<void>> giraffeFutures;
+            
+            for (auto& giraffe : giraffes) {
+                giraffeFutures.push_back(std::async(std::launch::async, [&giraffe, deltaTime]() {
+                    giraffe.moveRandomly(deltaTime);
+                }));
+            }
+
+            // Wait for all giraffes to finish updating
+            for (auto& future : giraffeFutures) {
+                future.get();  // Ensure all updates are complete
+            }
+            
+            //objectShader2.use();
+            // Render the giraffes after movement updates
+            for (auto& giraffe : giraffes) {
+                glm::mat4 giraffeModelMatrix = glm::mat4(1.0f);
+                giraffeModelMatrix = glm::translate(giraffeModelMatrix, giraffe.getPosition());
+                giraffeModelMatrix = glm::rotate(giraffeModelMatrix, glm::radians(giraffe.getTotalRotationAngle()), glm::vec3(0.0f, 1.0f, 0.0f));
+                giraffeModelMatrix = glm::scale(giraffeModelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
+
+                objectShader.setMat4("model", giraffeModelMatrix);
+                objectShader.setMat4("view", view);
+                objectShader.setMat4("projection", projection);
+                giraffe.draw(objectShader);
+            }
+
+            reflectionShader.use();
+            setLightingAndObjectProperties(reflectionShader);
 
             // Draw the rocks
             for (const auto& position : smallRockPositions) {
+                Hitbox smallRockHitBox = small_rock.calculateHitbox();
+                smallRockHitBox.minCorner += position;
+                smallRockHitBox.maxCorner += position;
+                // Check if this hitbox already exists in environmentHitboxes
+                bool isUnique = std::none_of(environmentHitboxes.begin(), environmentHitboxes.end(),
+                                            [&](const Hitbox& hitbox) {
+                                                return hitbox == smallRockHitBox;
+                                            });
+
+                if (isUnique) {
+                    environmentHitboxes.push_back(smallRockHitBox);
+                }
+
                 glm::mat4 smallRockkModel = glm::mat4(1.0f);
                 smallRockkModel = glm::translate(smallRockkModel, position); // Use fixed position
                 smallRockkModel = glm::scale(smallRockkModel, glm::vec3(3.5f, 3.5f, 3.5f)); // Scale trees if necessary
                 
-                objectShader.setMat4("model", smallRockkModel);
-                objectShader.setMat4("view", view);
-                objectShader.setMat4("projection", projection);
-                small_rock.draw(objectShader); // Draw small rocks
+                reflectionShader.setMat4("model", smallRockkModel);
+                reflectionShader.setMat4("view", view);
+                reflectionShader.setMat4("projection", projection);
+                reflectionShader.setVec3("cameraPos", camera.position);
+                small_rock.draw(reflectionShader, cubemap.getTextureID()); // Draw small rocks
             }
 
             for (const auto& position : bigRockPositions) {
+                Hitbox bigRockHitBox = big_rock.calculateHitbox();
+                bigRockHitBox.minCorner += position;
+                bigRockHitBox.maxCorner += position;
+                // Check if this hitbox already exists in environmentHitboxes
+                bool isUnique = std::none_of(environmentHitboxes.begin(), environmentHitboxes.end(),
+                                            [&](const Hitbox& hitbox) {
+                                                return hitbox == bigRockHitBox;
+                                            });
+
+                if (isUnique) {
+                    environmentHitboxes.push_back(bigRockHitBox);
+                }
+
+
                 glm::mat4 bigRockkModel = glm::mat4(1.0f);
                 bigRockkModel = glm::translate(bigRockkModel, position); // Use fixed position
                 bigRockkModel = glm::scale(bigRockkModel, glm::vec3(1.5f, 1.5f, 1.5f)); // Scale trees if necessary
                 
-                objectShader.setMat4("model", bigRockkModel);
-                objectShader.setMat4("view", view);
-                objectShader.setMat4("projection", projection);
-                big_rock.draw(objectShader); // Draw big rocks
+                reflectionShader.setMat4("model", bigRockkModel);
+                reflectionShader.setMat4("view", view);
+                reflectionShader.setMat4("projection", projection);
+                reflectionShader.setVec3("cameraPos", camera.position);
+                big_rock.draw(reflectionShader, cubemap.getTextureID()); // Draw big rocks
             }
+
+            // Render smoke particles
+            exhaustSystem.render(smokeShader, view, projection);
+
+            // Check for collisions between the car and the cows
+            for (auto& cow : cows) {
+                if (car.getHitbox().isColliding(cow.getHitbox())) {
+                    // prevent multiple knockback force if there is still collision on next frames
+                    if (doOnce) {
+                        glm::vec3 hitDirection = cow.getPosition() - car.getPosition();
+                        cow.gameHit(hitDirection, car.getSpeed());  // Pass car speed and direction to apply knockback
+                        car.gameHit();
+                    }
+                }
+
+                for (auto& giraffe : giraffes) {
+                    if (cow.getHitbox().isColliding(giraffe.getHitbox()) && cow.getCowHit()) {
+                        glm::vec3 hitDirection = giraffe.getPosition() - cow.getPosition();
+                        giraffe.gameHit(hitDirection, cow.getSpeed(), deltaTime, gameScore);
+
+                        // // Score one point for each giraffe hit by a cow
+                        // gameScore++;
+                        //std::cout << "Giraffe hit! Current Score: " << gameScore << std::endl;
+                    }
+                    giraffe.update(deltaTime);
+                }
+
+            }
+
+            // Check for collisions between the car and the environment
+            for (const auto& hitbox : environmentHitboxes) {
+                if (car.getHitbox().isColliding(hitbox)) {
+                    //std::cout << "Car and environment collided!" << std::endl;
+                }
+            }
+
+            // Render smoke particles
+            exhaustSystem.render(smokeShader, view, projection);
+
+            // Render the score at the top left
+            std::string scoreText = "SCORE: " + std::to_string(gameScore);
+            textRenderer.RenderText(scoreText, 25.0f, 725.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // White color
+
+            // Render the remaining time at the top right
+            std::stringstream stream;
+            stream << std::fixed << std::setprecision(2) << (120.0f - gameTimeElapsed);
+            std::string timeText = "TIME: " + stream.str();
+            textRenderer.RenderText(timeText, 875.0f, 725.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // White color
+
+        } else if (currentState == STATE_END_GAME) {
+            // Show the cursor in the end game menu
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+            // Process end game input
+            processEndGameInput(window, car, cows, giraffes, carModel, cowModel, giraffeModel);
+
+            // Render the end game screen
+            renderEndGameScreen(quadShader, textRenderer, gameScore);
         }
 
         glfwSwapBuffers(window);

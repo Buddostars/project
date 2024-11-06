@@ -6,7 +6,7 @@
 void Model::loadModel(std::string const &path){
     // read file via ASSIMP
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals |  aiProcess_CalcTangentSpace); // aiProcess_FlipUVs |
     // check for errors
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
@@ -107,15 +107,73 @@ Mesh Model:: processMesh(aiMesh *mesh, const aiScene *scene){
     // 4. height maps
     std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-        
+
+    // --- PBR --- 
+    // Albedo map
+    std::vector<Texture> albedoMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_albedo");
+    textures.insert(textures.end(), albedoMaps.begin(), albedoMaps.end());
+
+    // Metallic map
+    std::vector<Texture> metallicMaps = loadMaterialTextures(material, aiTextureType_METALNESS, "texture_metallic");
+    textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
+
+    // Roughness map
+    std::vector<Texture> roughnessMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS, "texture_roughness");
+    textures.insert(textures.end(), roughnessMaps.begin(), roughnessMaps.end());
+
+    // Ambient Occlusion map
+    std::vector<Texture> aoMaps = loadMaterialTextures(material, aiTextureType_AMBIENT_OCCLUSION, "texture_ao");
+    textures.insert(textures.end(), aoMaps.begin(), aoMaps.end());
+
+    
+    // load material
+    Material mat = loadMaterials(material);
+
     // return a mesh object created from the extracted mesh data
-    return Mesh(vertices, indices, textures);
+    return Mesh(vertices, indices, textures, mat);
 }
 
-void Model::draw(Shader& shader) {
-    for(unsigned int i = 0; i < meshes.size(); i++)
+void Model::draw(Shader& shader, unsigned int cubemapTextureID) {
+    for (unsigned int i = 0; i < meshes.size(); i++) {
+        meshes[i].Draw(shader, cubemapTextureID);
+        // Bind PBR Textures
+        for (unsigned int j = 0; j < meshes[i].textures.size(); j++) {
+            glActiveTexture(GL_TEXTURE0 + j); // Activate the texture unit
+            std::string name = meshes[i].textures[j].type;
+
+            // use specific names for PBR textures
+            if (name == "texture_albedo") {
+                shader.setInt("albedoMap", j); // Corresponds to GL_TEXTURE0 + j
+                //std::cout << "Albedo map set\n";
+
+            } else if (name == "texture_normal") {
+                shader.setInt("normalMap", j); // Corresponds to GL_TEXTURE0 + j
+                //std::cout << "normal map set\n";
+
+            } else if (name == "texture_metallic") {
+                shader.setInt("metallicMap", j); // Corresponds to GL_TEXTURE0 + j
+                //std::cout << "mettallic map set\n";
+
+            } else if (name == "texture_roughness") {
+                shader.setInt("roughnessMap", j); // Corresponds to GL_TEXTURE0 + j
+                //std::cout << "roughness map set\n";
+
+            } else if (name == "texture_ao") {
+                shader.setInt("aoMap", j); // Corresponds to GL_TEXTURE0 + j
+                //std::cout << "ao map set\n";
+            }
+
+            glBindTexture(GL_TEXTURE_2D, meshes[i].textures[j].id);
+        }
+
+        // Draw the mesh with the currently bound textures
         meshes[i].Draw(shader);
+    }
+
+    // Unbind textures after drawing
+    glActiveTexture(GL_TEXTURE0);
 }
+
 
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName)
 {
@@ -145,6 +203,25 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType 
         }
     }
     return textures;
+}
+
+// function to load Materials (from *.mtl) for model and save them in a vector
+Material Model::loadMaterials(aiMaterial *mat){
+    aiString name;
+    aiColor3D color;
+    float shininess;
+    mat->Get(AI_MATKEY_NAME, name);
+    mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+    mat->Get(AI_MATKEY_SHININESS, shininess);
+    Material material;
+    material.name = name.C_Str();
+    material.shininess = shininess;
+    material.diffuse = glm::vec3(color.r, color.g, color.b);
+    mat->Get(AI_MATKEY_COLOR_SPECULAR, color);
+    material.specular = glm::vec3(color.r, color.g, color.b);
+    mat->Get(AI_MATKEY_COLOR_AMBIENT, color);
+    material.ambient = glm::vec3(color.r, color.g, color.b);
+    return material;
 }
 
 
@@ -186,4 +263,26 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
     }
 
     return textureID;
+}
+
+// Calculate the hitbox for the model
+Hitbox Model::calculateHitbox() const {
+    glm::vec3 minCorner(FLT_MAX, FLT_MAX, FLT_MAX);
+    glm::vec3 maxCorner(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+    for (const auto& mesh : meshes) {
+
+        for (const auto& vertex : mesh.vertices) {
+            
+            minCorner.x = std::min(minCorner.x, vertex.Position.x);
+            minCorner.y = std::min(minCorner.y, vertex.Position.y);
+            minCorner.z = std::min(minCorner.z, vertex.Position.z);
+
+            maxCorner.x = std::max(maxCorner.x, vertex.Position.x);
+            maxCorner.y = std::max(maxCorner.y, vertex.Position.y);
+            maxCorner.z = std::max(maxCorner.z, vertex.Position.z);
+        }
+    }
+
+    return Hitbox(minCorner, maxCorner);
 }
